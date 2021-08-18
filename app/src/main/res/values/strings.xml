@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Android-Google-Drive-Loader</string>
+    <string name="push_btn_name">Push</string>
+    <string name="pull_button_name">Pull</string>
+</resources>
