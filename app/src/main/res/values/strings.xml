@@ -1,5 +1,10 @@
 <resources>
-    <string name="app_name">Android-Google-Drive-Loader</string>
+    <string name="app_name">GD Loader</string>
     <string name="push_btn_name">Push</string>
-    <string name="pull_button_name">Pull</string>
+    <string name="pull_btn_name">Pull</string>
+    <string name="chosen_local_folder_label">Chosen local folder:</string>
+    <string name="chosen_folder">None</string>
+    <string name="choose_folder_btn_name">Choose</string>
+    <string name="edit_text_drive_folder_hint">Drive folder name ...</string>
+    <string name="loading_text_view_value">Fetching data...</string>
 </resources>

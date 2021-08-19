@@ -4,10 +4,10 @@ import android.content.Context;
 import android.os.Handler;
 import android.widget.Toast;
 
+import androidx.documentfile.provider.DocumentFile;
+
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.android.gms.tasks.Tasks;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+
 public class GoogleDriveHelper {
 
     private Executor executor;
@@ -33,9 +34,14 @@ public class GoogleDriveHelper {
 
     public static String SCOPE = DriveScopes.DRIVE;
     private final int FILE_PAGE_SIZE = 100;
+    public final String FOLDER_TYPE = "application/vnd.google-apps.folder";
 
     public void showToast(String msg) {
         Toast.makeText(appContext, msg, Toast.LENGTH_LONG).show();
+    }
+
+    public Exception getExceptionWithError(String msg) {
+        return new Exception("ERROR: " + msg);
     }
 
     public GoogleDriveHelper(Context appContext, GoogleSignInAccount account, String appName) {
@@ -74,8 +80,12 @@ public class GoogleDriveHelper {
 
         List<File> files = result.getFiles();
 
-        if (files.size() == 0 || files.size() > 1) {
-            throw new Exception("ERROR: Duplicate folders");
+        if (files.size() > 1) {
+            throw getExceptionWithError("Duplicate folders");
+        }
+
+        if (files.size() == 0) {
+            throw getExceptionWithError("Folder on the drive was not found");
         }
 
         return files.get(0).getId();
@@ -97,6 +107,9 @@ public class GoogleDriveHelper {
             FileList files = request.execute();
 
             for (File file : files.getFiles()) {
+                if (file.getMimeType() == FOLDER_TYPE) {
+                    throw getExceptionWithError("Directory in the drive folder");
+                }
                 result.add(file.getName());
             }
 
@@ -104,19 +117,40 @@ public class GoogleDriveHelper {
         }
         while (request.getPageToken() != null && request.getPageToken().length() > 0);
 
-
         return result;
     }
 
-    public Task<Void> push(String localFolder, String driveFolderName) {
+    public Task<Void> push(DocumentFile localFolder, String driveFolderName) {
         return Tasks.call(executor, () -> {
+
+            LocalFileHelper.getFolderFileNames(localFolder);
             List<String> driveFolderFileNames = getFolderFileNames(driveFolderName);
 
             HashSet<String> driveFolderFileNamesSet = new HashSet<>(driveFolderFileNames);
 
-            if (driveFolderFileNames.size() != driveFolderFileNames.size()) {
-                throw new Exception("Duplicate items on drive");
+            if (driveFolderFileNamesSet.size() != driveFolderFileNames.size()) {
+                throw getExceptionWithError("Duplicate items in the drive folder");
             }
+
+            List<String> localFolderFileNames = LocalFileHelper.getFolderFileNames(localFolder);
+
+            HashSet<String> localFolderFileNamesSet = new HashSet<>(localFolderFileNames);
+
+            if (localFolderFileNamesSet.size() != localFolderFileNames.size()) {
+                throw getExceptionWithError("Duplicate items in local folder");
+            }
+
+            HashSet<String> uploadToDriveFiles = SetOperationsHelper.
+                    relativeComplement(localFolderFileNamesSet, driveFolderFileNamesSet);
+
+            HashSet<String> deleteOnDriveFiles = SetOperationsHelper.
+                    relativeComplement(driveFolderFileNamesSet, localFolderFileNamesSet);
+
+            System.out.println("UPLOAD:");
+            System.out.println(uploadToDriveFiles);
+
+            System.out.println("DELETE:");
+            System.out.println(deleteOnDriveFiles);
 
             return null;
         });
