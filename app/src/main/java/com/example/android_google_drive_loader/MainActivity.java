@@ -22,6 +22,7 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.example.android_google_drive_loader.Helpers.FetchHelper;
 import com.example.android_google_drive_loader.Helpers.LocalFileHelper;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -41,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     public static GoogleDriveHelper driveHelper;
     public static DocumentFile pickedDir;
     public static String driveFolderName;
+    public static FetchHelper fetchHelper;
 
     public Button pushButton;
     public Button pullButton;
@@ -83,13 +85,12 @@ public class MainActivity extends AppCompatActivity {
 
                 settings.edit().putString(DRIVE_DIRECTORY_URI_CACHE_NAME, driveFolderName).apply();
 
-                driveHelper.push(pickedDir, driveFolderName).addOnSuccessListener(isTestPassed -> {
-                    if (isTestPassed) {
-                        driveHelper.showToast("SUCCESS");
-                    }
-                    else {
-                        driveHelper.showToast("ERROR: Local and drive folders are not equal (please, check your files manually)");
-                    }
+                driveHelper.fetchData(pickedDir, driveFolderName).addOnSuccessListener(resFetchHelper -> {
+
+                    fetchHelper = resFetchHelper;
+
+                    Intent intent = new Intent(this, ConfirmPushActivity.class);
+                    startActivity(intent);
 
                     progressBar.setVisibility(View.INVISIBLE);
                     loadingTextView.setVisibility(View.INVISIBLE);
@@ -129,13 +130,12 @@ public class MainActivity extends AppCompatActivity {
 
                 settings.edit().putString(DRIVE_DIRECTORY_URI_CACHE_NAME, driveFolderName).apply();
 
-                driveHelper.pull(pickedDir, driveFolderName).addOnSuccessListener(isTestPassed -> {
-                    if (isTestPassed) {
-                        driveHelper.showToast("SUCCESS");
-                    }
-                    else {
-                        driveHelper.showToast("ERROR: Local and drive folders are not equal (please, check your files manually)");
-                    }
+                driveHelper.fetchData(pickedDir, driveFolderName).addOnSuccessListener(resFetchHelper -> {
+
+                    fetchHelper = resFetchHelper;
+
+                    Intent intent = new Intent(this, ConfirmPullActivity.class);
+                    startActivity(intent);
 
                     progressBar.setVisibility(View.INVISIBLE);
                     loadingTextView.setVisibility(View.INVISIBLE);
@@ -160,7 +160,6 @@ public class MainActivity extends AppCompatActivity {
                 loadingTextView.setVisibility(View.INVISIBLE);
             }
         });
-
 
         chooseButton = findViewById(R.id.choose_folder_btn);
         chooseButton.setOnClickListener(view -> {

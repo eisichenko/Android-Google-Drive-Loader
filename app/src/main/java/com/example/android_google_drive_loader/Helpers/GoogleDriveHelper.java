@@ -20,7 +20,6 @@ import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -218,6 +217,12 @@ public class GoogleDriveHelper {
     }
 
     public Boolean testLocalAndDriveFolders(DocumentFile localFolder, String driveFolderName) throws Exception {
+        FetchHelper helper = getFetcher(localFolder, driveFolderName);
+
+        return helper.getDriveFolderFileNamesSet().equals(helper.getLocalFolderFileNamesSet());
+    }
+
+    public FetchHelper getFetcher(DocumentFile localFolder, String driveFolderName) throws Exception {
         List<String> driveFolderFileNames = getFolderFileNames(driveFolderName);
         HashSet<String> driveFolderFileNamesSet = new HashSet<>(driveFolderFileNames);
 
@@ -232,29 +237,35 @@ public class GoogleDriveHelper {
             throw getExceptionWithError("Duplicate items in local folder");
         }
 
-        return driveFolderFileNamesSet.equals(localFolderFileNamesSet);
+        FetchHelper helper = new FetchHelper();
+        helper.setDriveFolderFileNamesSet(driveFolderFileNamesSet);
+        helper.setLocalFolderFileNamesSet(localFolderFileNamesSet);
+
+        return helper;
     }
 
-    public Task<Boolean> push(DocumentFile localFolder, String driveFolderName) {
+
+    public Task<FetchHelper> fetchData(DocumentFile localFolder, String driveFolderName) {
         return Tasks.call(executor, () -> {
 
             if (!isNetworkAvailable()) {
                 throw getExceptionWithError("Can't connect to network");
             }
 
-            List<String> driveFolderFileNames = getFolderFileNames(driveFolderName);
-            HashSet<String> driveFolderFileNamesSet = new HashSet<>(driveFolderFileNames);
+            return getFetcher(localFolder, driveFolderName);
+        });
+    }
 
-            if (driveFolderFileNamesSet.size() != driveFolderFileNames.size()) {
-                throw getExceptionWithError("Duplicate items in the drive folder");
+    public Task<Boolean> push(FetchHelper fetchHelper, DocumentFile localFolder, String driveFolderName) {
+        return Tasks.call(executor, () -> {
+
+            if (!isNetworkAvailable()) {
+                throw getExceptionWithError("Can't connect to network");
             }
 
-            List<String> localFolderFileNames = LocalFileHelper.getFolderFileNames(localFolder);
-            HashSet<String> localFolderFileNamesSet = new HashSet<>(localFolderFileNames);
+            HashSet<String> localFolderFileNamesSet = fetchHelper.getLocalFolderFileNamesSet();
+            HashSet<String> driveFolderFileNamesSet = fetchHelper.getDriveFolderFileNamesSet();
 
-            if (localFolderFileNamesSet.size() != localFolderFileNames.size()) {
-                throw getExceptionWithError("Duplicate items in local folder");
-            }
 
             HashSet<String> uploadToDriveFiles = SetOperationsHelper.
                     relativeComplement(localFolderFileNamesSet, driveFolderFileNamesSet);
@@ -290,26 +301,15 @@ public class GoogleDriveHelper {
         });
     }
 
-    public Task<Boolean> pull(DocumentFile localFolder, String driveFolderName) {
+    public Task<Boolean> pull(FetchHelper fetchHelper, DocumentFile localFolder, String driveFolderName) {
         return Tasks.call(executor, () -> {
 
             if (!isNetworkAvailable()) {
                 throw getExceptionWithError("Can't connect to network");
             }
 
-            List<String> driveFolderFileNames = getFolderFileNames(driveFolderName);
-            HashSet<String> driveFolderFileNamesSet = new HashSet<>(driveFolderFileNames);
-
-            if (driveFolderFileNamesSet.size() != driveFolderFileNames.size()) {
-                throw getExceptionWithError("Duplicate items in the drive folder");
-            }
-
-            List<String> localFolderFileNames = LocalFileHelper.getFolderFileNames(localFolder);
-            HashSet<String> localFolderFileNamesSet = new HashSet<>(localFolderFileNames);
-
-            if (localFolderFileNamesSet.size() != localFolderFileNames.size()) {
-                throw getExceptionWithError("Duplicate items in local folder");
-            }
+            HashSet<String> localFolderFileNamesSet = fetchHelper.getLocalFolderFileNamesSet();
+            HashSet<String> driveFolderFileNamesSet = fetchHelper.getDriveFolderFileNamesSet();
 
             HashSet<String> deleteLocalFiles = SetOperationsHelper.
                     relativeComplement(localFolderFileNamesSet, driveFolderFileNamesSet);
