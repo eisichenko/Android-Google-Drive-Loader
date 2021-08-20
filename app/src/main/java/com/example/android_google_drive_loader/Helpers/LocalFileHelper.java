@@ -9,6 +9,7 @@ import androidx.documentfile.provider.DocumentFile;
 
 import com.example.android_google_drive_loader.MainActivity;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -42,28 +43,41 @@ public class LocalFileHelper {
         return res;
     }
 
-    public static String getPathStringFromUri(Uri uri) {
-        ArrayList<String> path_strings = new ArrayList<>(Arrays.asList(uri.getPath().split(":|/")));
+    public static File getFileInDirectoryByName(DocumentFile directory, String fileName) {
+        String directoryPath = getAbsolutePathStringFromUri(directory.getUri());
 
-        while (path_strings.get(0).length() == 0) {
-            path_strings.remove(0);
-        }
+        ArrayList<String> strings = new ArrayList<>();
+        strings.add(directoryPath);
+        strings.add(fileName);
 
-        while (path_strings.get(path_strings.size() - 1).length() == 0) {
-            path_strings.remove(path_strings.size() - 1);
-        }
+        return new File(pathCombine(strings));
+    }
 
-        if (path_strings.get(1).equals("primary")) {
-            path_strings.set(1, Environment.getExternalStorageDirectory().getPath());
-            path_strings.remove(0);
+    public static File getFileFromDocumentFile(DocumentFile file) {
+        return new File(getAbsolutePathStringFromUri(file.getUri()));
+    }
+
+    public static String getAbsolutePathStringFromUri(Uri uri) {
+        ArrayList<String> strings = new ArrayList<>(Arrays.asList(uri.toString().split("/")));
+
+        String pathString = Uri.decode(strings.get(strings.size() - 1));
+
+        ArrayList<String> pathStrings = new ArrayList<>(Arrays.asList(pathString.split(":")));
+
+        if (pathStrings.get(0).equals("primary")) {
+            pathStrings.set(0, Environment.getExternalStorageDirectory().getPath());
         }
         else {
-            path_strings.set(0, "storage");
+            pathStrings.add(0, "storage");
         }
 
+        return pathCombine(pathStrings);
+    }
+
+    public static String pathCombine(ArrayList<String> pathStrings) {
         String res = "";
 
-        for (String str : path_strings) {
+        for (String str : pathStrings) {
             if (res.length() == 0) {
                 res += str;
             }
@@ -77,4 +91,5 @@ public class LocalFileHelper {
 
         return res;
     }
+
 }

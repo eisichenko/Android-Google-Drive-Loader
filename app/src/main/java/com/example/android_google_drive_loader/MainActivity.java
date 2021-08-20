@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     public static String driveFolderName;
 
     public Button pushButton;
+    public Button pullButton;
     public Button chooseButton;
     public TextView chosenFolderTextView;
     public EditText driveFolderNameEditText;
@@ -82,7 +83,14 @@ public class MainActivity extends AppCompatActivity {
 
                 settings.edit().putString(DRIVE_DIRECTORY_URI_CACHE_NAME, driveFolderName).apply();
 
-                driveHelper.push(pickedDir, driveFolderName).addOnSuccessListener(files -> {
+                driveHelper.push(pickedDir, driveFolderName).addOnSuccessListener(isTestPassed -> {
+                    if (isTestPassed) {
+                        driveHelper.showToast("SUCCESS");
+                    }
+                    else {
+                        driveHelper.showToast("ERROR: Local and drive folders are not equal (please, check your files manually)");
+                    }
+
                     progressBar.setVisibility(View.INVISIBLE);
                     loadingTextView.setVisibility(View.INVISIBLE);
                 }).addOnFailureListener(e -> {
@@ -106,6 +114,53 @@ public class MainActivity extends AppCompatActivity {
                 loadingTextView.setVisibility(View.INVISIBLE);
             }
         });
+
+        pullButton = findViewById(R.id.pullButton);
+        pullButton.setOnClickListener(view -> {
+            try {
+                driveFolderName = driveFolderNameEditText.getText().toString();
+
+                if (driveFolderName.length() == 0) {
+                    throw driveHelper.getExceptionWithError("Empty drive folder name");
+                }
+                else if (pickedDir == null) {
+                    throw driveHelper.getExceptionWithError("Local folder was not picked");
+                }
+
+                settings.edit().putString(DRIVE_DIRECTORY_URI_CACHE_NAME, driveFolderName).apply();
+
+                driveHelper.pull(pickedDir, driveFolderName).addOnSuccessListener(isTestPassed -> {
+                    if (isTestPassed) {
+                        driveHelper.showToast("SUCCESS");
+                    }
+                    else {
+                        driveHelper.showToast("ERROR: Local and drive folders are not equal (please, check your files manually)");
+                    }
+
+                    progressBar.setVisibility(View.INVISIBLE);
+                    loadingTextView.setVisibility(View.INVISIBLE);
+                }).addOnFailureListener(e -> {
+                    driveHelper.showToast(e.getMessage());
+                    System.out.println(e.getMessage());
+                    e.printStackTrace();
+
+                    progressBar.setVisibility(View.INVISIBLE);
+                    loadingTextView.setVisibility(View.INVISIBLE);
+                });
+
+                progressBar.setVisibility(View.VISIBLE);
+                loadingTextView.setVisibility(View.VISIBLE);
+            }
+            catch (Exception e) {
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+                driveHelper.showToast(e.getMessage());
+
+                progressBar.setVisibility(View.INVISIBLE);
+                loadingTextView.setVisibility(View.INVISIBLE);
+            }
+        });
+
 
         chooseButton = findViewById(R.id.choose_folder_btn);
         chooseButton.setOnClickListener(view -> {
@@ -138,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
         if (pickedDirUri.length() > 0) {
             pickedDir = DocumentFile.fromTreeUri(getApplicationContext(), Uri.parse(pickedDirUri));
             if (pickedDir != null) {
-                chosenFolderTextView.setText(LocalFileHelper.getPathStringFromUri(pickedDir.getUri()));
+                chosenFolderTextView.setText(LocalFileHelper.getAbsolutePathStringFromUri(pickedDir.getUri()));
             }
         }
 
@@ -202,7 +257,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case REQUEST_CODE_CHOOSE_FOLDER:
                     pickedDir = LocalFileHelper.getFileFromUri(getApplicationContext(), resultData.getData());
-                    chosenFolderTextView.setText(LocalFileHelper.getPathStringFromUri(pickedDir.getUri()));
+                    chosenFolderTextView.setText(LocalFileHelper.getAbsolutePathStringFromUri(pickedDir.getUri()));
 
                     settings.edit().putString(LOCAL_DIRECTORY_URI_CACHE_NAME, pickedDir.getUri().toString()).apply();
 

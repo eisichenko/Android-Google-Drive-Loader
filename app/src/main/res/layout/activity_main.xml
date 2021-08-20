@@ -112,4 +112,5 @@
         app:layout_constraintStart_toStartOf="@+id/progressBar"
         app:layout_constraintTop_toBottomOf="@+id/progressBar"
         app:layout_constraintVertical_bias="0.101" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
