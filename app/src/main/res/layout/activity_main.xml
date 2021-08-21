@@ -34,7 +34,7 @@
         app:layout_constraintVertical_bias="0.672" />
 
     <TextView
-        android:id="@+id/chosen_folder_label"
+        android:id="@+id/chosenFolderLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/chosen_local_folder_label"
@@ -47,7 +47,7 @@
         app:layout_constraintVertical_bias="0.06" />
 
     <TextView
-        android:id="@+id/chosen_folder"
+        android:id="@+id/chosenFolder"
         android:layout_width="182dp"
         android:layout_height="159dp"
         android:minWidth="70dp"
@@ -55,14 +55,14 @@
         android:textColor="#000"
         android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@+id/pushButton"
-        app:layout_constraintEnd_toEndOf="@+id/chosen_folder_label"
+        app:layout_constraintEnd_toEndOf="@+id/chosenFolderLabel"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="@+id/chosen_folder_label"
-        app:layout_constraintTop_toBottomOf="@+id/chosen_folder_label"
+        app:layout_constraintStart_toStartOf="@+id/chosenFolderLabel"
+        app:layout_constraintTop_toBottomOf="@+id/chosenFolderLabel"
         app:layout_constraintVertical_bias="0.024" />
 
     <EditText
-        android:id="@+id/drive_folder_edit_text"
+        android:id="@+id/driveFolderEditText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:ems="10"
@@ -70,14 +70,14 @@
         android:inputType="textPersonName"
         android:minHeight="48dp"
         app:layout_constraintBottom_toTopOf="@+id/pushButton"
-        app:layout_constraintEnd_toEndOf="@+id/chosen_folder"
+        app:layout_constraintEnd_toEndOf="@+id/chosenFolder"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="@+id/chosen_folder"
-        app:layout_constraintTop_toBottomOf="@+id/chosen_folder"
+        app:layout_constraintStart_toStartOf="@+id/chosenFolder"
+        app:layout_constraintTop_toBottomOf="@+id/chosenFolder"
         app:layout_constraintVertical_bias="0.25" />
 
     <Button
-        android:id="@+id/choose_folder_btn"
+        android:id="@+id/chooseFolderBtn"
         android:layout_width="110dp"
         android:layout_height="48dp"
         android:backgroundTint="#F109B3"
@@ -85,7 +85,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.535"
-        app:layout_constraintStart_toEndOf="@+id/chosen_folder"
+        app:layout_constraintStart_toEndOf="@+id/chosenFolder"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.09" />
 

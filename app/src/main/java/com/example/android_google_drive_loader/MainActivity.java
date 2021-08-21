@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         pushButton = findViewById(R.id.pushButton);
-        driveFolderNameEditText = findViewById(R.id.drive_folder_edit_text);
+        driveFolderNameEditText = findViewById(R.id.driveFolderEditText);
 
         progressBar = findViewById(R.id.progressBar);
         loadingTextView = findViewById(R.id.loadingTextView);
@@ -161,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        chooseButton = findViewById(R.id.choose_folder_btn);
+        chooseButton = findViewById(R.id.chooseFolderBtn);
         chooseButton.setOnClickListener(view -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
                 Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
@@ -184,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        chosenFolderTextView = findViewById(R.id.chosen_folder);
+        chosenFolderTextView = findViewById(R.id.chosenFolder);
 
         settings = getSharedPreferences(APP_PREFERENCES_NAME, Context.MODE_PRIVATE);
         String pickedDirUri = settings.getString(LOCAL_DIRECTORY_URI_CACHE_NAME, "");

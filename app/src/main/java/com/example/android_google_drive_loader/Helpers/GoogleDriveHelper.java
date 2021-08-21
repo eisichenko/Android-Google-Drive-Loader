@@ -7,6 +7,7 @@ import android.widget.Toast;
 
 import androidx.documentfile.provider.DocumentFile;
 
+import com.example.android_google_drive_loader.ConfirmPushActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -256,22 +257,15 @@ public class GoogleDriveHelper {
         });
     }
 
-    public Task<Boolean> push(FetchHelper fetchHelper, DocumentFile localFolder, String driveFolderName) {
+    public Task<Boolean> push(DocumentFile localFolder, String driveFolderName) {
         return Tasks.call(executor, () -> {
 
             if (!isNetworkAvailable()) {
                 throw getExceptionWithError("Can't connect to network");
             }
 
-            HashSet<String> localFolderFileNamesSet = fetchHelper.getLocalFolderFileNamesSet();
-            HashSet<String> driveFolderFileNamesSet = fetchHelper.getDriveFolderFileNamesSet();
-
-
-            HashSet<String> uploadToDriveFiles = SetOperationsHelper.
-                    relativeComplement(localFolderFileNamesSet, driveFolderFileNamesSet);
-
-            HashSet<String> deleteOnDriveFiles = SetOperationsHelper.
-                    relativeComplement(driveFolderFileNamesSet, localFolderFileNamesSet);
+            HashSet<String> uploadToDriveFiles = ConfirmPushActivity.uploadToDriveFiles;
+            HashSet<String> deleteOnDriveFiles = ConfirmPushActivity.deleteOnDriveFiles;
 
             System.out.println("UPLOAD:");
             System.out.println(uploadToDriveFiles);
