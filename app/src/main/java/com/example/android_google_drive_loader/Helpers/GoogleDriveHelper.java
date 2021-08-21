@@ -1,13 +1,23 @@
 package com.example.android_google_drive_loader.Helpers;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.documentfile.provider.DocumentFile;
 
 import com.example.android_google_drive_loader.ConfirmPushActivity;
+import com.example.android_google_drive_loader.R;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
@@ -19,6 +29,8 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
+
+import org.w3c.dom.Text;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -257,8 +269,14 @@ public class GoogleDriveHelper {
         });
     }
 
-    public Task<Boolean> push(DocumentFile localFolder, String driveFolderName) {
+    public Task<Boolean> push(Activity activity, DocumentFile localFolder, String driveFolderName) {
         return Tasks.call(executor, () -> {
+
+            TextView currentOperationNameTextView = activity.findViewById(R.id.currentOperationNameTextView);
+            TextView currentOperationFileNameTextView = activity.findViewById(R.id.currentOperationFileNameTextView);
+            ProgressBar loadingProgressBar = activity.findViewById(R.id.loadingProgressBar);
+            TextView loadingStatusTextView = activity.findViewById(R.id.loadingStatusTextView);
+            Button backButton = activity.findViewById(R.id.backMainScreenButton);
 
             if (!isNetworkAvailable()) {
                 throw getExceptionWithError("Can't connect to network");
@@ -267,12 +285,29 @@ public class GoogleDriveHelper {
             HashSet<String> uploadToDriveFiles = ConfirmPushActivity.uploadToDriveFiles;
             HashSet<String> deleteOnDriveFiles = ConfirmPushActivity.deleteOnDriveFiles;
 
+            final Integer totalSize = uploadToDriveFiles.size() + deleteOnDriveFiles.size();
+            Integer currentCompleted = 0;
+
             System.out.println("UPLOAD:");
             System.out.println(uploadToDriveFiles);
 
             for (String name : uploadToDriveFiles) {
+                activity.runOnUiThread(() -> {
+                    currentOperationNameTextView.setText("Uploading to drive");
+                    currentOperationFileNameTextView.setText(name);
+                });
+
+
                 if (uploadToDriveFile(localFolder, name, driveFolderName)) {
                     System.out.println(name + " : " + "OK");
+
+                    currentCompleted++;
+                    int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
+
+                    activity.runOnUiThread(() -> {
+                        loadingProgressBar.setProgress(percent);
+                        loadingStatusTextView.setText("Loading " + percent + "%");
+                    });
                 }
                 else {
                     System.out.println(name + " : FAIL");
@@ -283,15 +318,43 @@ public class GoogleDriveHelper {
             System.out.println(deleteOnDriveFiles);
 
             for (String name : deleteOnDriveFiles) {
+                activity.runOnUiThread(() -> {
+                    currentOperationNameTextView.setText("Deleting from drive");
+                    currentOperationFileNameTextView.setText(name);
+                });
+
                 if (deleteDriveFile(driveFolderName, name)) {
                     System.out.println("DELETE: " + name + " OK");
+
+                    currentCompleted++;
+                    int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
+
+                    activity.runOnUiThread(() -> {
+                        loadingProgressBar.setProgress(percent);
+                        loadingStatusTextView.setText("Loading " + percent + "%");
+                    });
+
                 }
                 else {
                     System.out.println("DELETE: " + name + " FAIL");
                 }
             }
 
-            return testLocalAndDriveFolders(localFolder, driveFolderName);
+            Boolean result = testLocalAndDriveFolders(localFolder, driveFolderName);
+
+            activity.runOnUiThread(() -> {
+                if (result) {
+                    loadingStatusTextView.setText("SUCCESS");
+                    loadingStatusTextView.setTextColor(Color.parseColor("#00ff00"));
+                }
+                else {
+                    loadingStatusTextView.setText("FAIL (folders are not equal)");
+                    loadingStatusTextView.setTextColor(Color.parseColor("#ff0000"));
+                }
+                backButton.setVisibility(View.VISIBLE);
+            });
+
+            return result;
         });
     }
 

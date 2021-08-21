@@ -13,4 +13,5 @@
     <string name="none_list_items_value">None</string>
     <string name="warning_value">Please, don\'t close your app while loading</string>
     <string name="loading_status_default_value">Loading 0%</string>
+    <string name="back_button_value">Back</string>
 </resources>

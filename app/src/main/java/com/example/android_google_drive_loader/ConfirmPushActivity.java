@@ -1,5 +1,6 @@
 package com.example.android_google_drive_loader;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -46,8 +47,17 @@ public class ConfirmPushActivity extends AppCompatActivity {
         uploadFromDriveRecyclerView.addItemDecoration(decoration);
         deleteOnDriveRecyclerView.addItemDecoration(decoration);
 
-        HashSet<String> driveFolderFileNamesSet = MainActivity.fetchHelper.getDriveFolderFileNamesSet();
-        HashSet<String> localFolderFileNamesSet = MainActivity.fetchHelper.getLocalFolderFileNamesSet();
+        HashSet<String> driveFolderFileNamesSet;
+        HashSet<String> localFolderFileNamesSet;
+
+        if (MainActivity.fetchHelper == null) {
+            driveFolderFileNamesSet = new HashSet<>();
+            localFolderFileNamesSet = new HashSet<>();
+        }
+        else {
+            driveFolderFileNamesSet = MainActivity.fetchHelper.getDriveFolderFileNamesSet();
+            localFolderFileNamesSet = MainActivity.fetchHelper.getLocalFolderFileNamesSet();
+        }
 
         uploadToDriveFiles = SetOperationsHelper.
                 relativeComplement(localFolderFileNamesSet, driveFolderFileNamesSet);
@@ -80,20 +90,8 @@ public class ConfirmPushActivity extends AppCompatActivity {
 
         startPushButton = findViewById(R.id.startPushButton);
         startPushButton.setOnClickListener(view -> {
-            MainActivity.driveHelper.push(MainActivity.pickedDir, MainActivity.driveFolderName)
-            .addOnSuccessListener(isTestPassed -> {
-                if (isTestPassed) {
-                    MainActivity.driveHelper.showToast("SUCCESS");
-                }
-                else {
-                    MainActivity.driveHelper.showToast("FAIL :(");
-                }
-            })
-            .addOnFailureListener(e -> {
-                MainActivity.driveHelper.showToast(e.getMessage());
-                System.out.println(e.getMessage());
-                e.printStackTrace();
-            });
+            Intent intent = new Intent(this, FinishJobActivity.class);
+            startActivity(intent);
         });
     }
 

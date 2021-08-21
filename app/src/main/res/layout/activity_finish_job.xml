@@ -7,7 +7,7 @@
     tools:context=".FinishJobActivity">
 
     <ProgressBar
-        android:id="@+id/progressBar2"
+        android:id="@+id/loadingProgressBar"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="244dp"
         android:layout_height="20dp"
@@ -28,10 +28,10 @@
         android:layout_marginEnd="61dp"
         android:ellipsize="middle"
         android:singleLine="true"
-        android:text="12312313123123123123123123123123123123"
+        android:text="qweqweqweqweqweqweqweqweq"
         android:textColor="#000"
-        android:textSize="17dp"
-        app:layout_constraintBottom_toTopOf="@+id/progressBar2"
+        android:textSize="17sp"
+        app:layout_constraintBottom_toTopOf="@+id/loadingProgressBar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -44,47 +44,59 @@
         android:layout_marginStart="172dp"
         android:layout_marginTop="281dp"
         android:layout_marginEnd="181dp"
-        android:layout_marginBottom="28dp"
-        android:textSize="17dp"
+        android:layout_marginBottom="40dp"
+        android:text="Uploasdasdasad aas"
         android:textColor="#000"
+        android:textSize="17sp"
         app:layout_constraintBottom_toTopOf="@+id/currentOperationFileNameTextView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.166"
+        app:layout_constraintHorizontal_bias="0.454"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintVertical_bias="1.0" />
 
     <TextView
         android:id="@+id/warningTextView"
         android:layout_width="273dp"
         android:layout_height="39dp"
-        android:layout_marginStart="177dp"
-        android:layout_marginTop="114dp"
-        android:layout_marginEnd="176dp"
-        android:layout_marginBottom="222dp"
         android:text="@string/warning_value"
         android:textAlignment="center"
         android:textColor="#f00"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.501"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/progressBar2"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.914" />
 
     <TextView
         android:id="@+id/loadingStatusTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="277dp"
+        android:layout_height="167dp"
         android:layout_marginStart="171dp"
         android:layout_marginTop="140dp"
         android:layout_marginEnd="182dp"
         android:layout_marginBottom="169dp"
         android:text="@string/loading_status_default_value"
-        android:textSize="30dp"
+        android:textAlignment="center"
         android:textColor="#C3C310"
+        android:textSize="30sp"
         app:layout_constraintBottom_toTopOf="@+id/currentOperationFileNameTextView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:visibility="invisible"
+        android:id="@+id/backMainScreenButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="158dp"
+        android:layout_marginTop="160dp"
+        android:layout_marginEnd="159dp"
+        android:layout_marginBottom="49dp"
+        android:text="@string/back_button_value"
+        app:layout_constraintBottom_toTopOf="@+id/warningTextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/loadingProgressBar" />
 </androidx.constraintlayout.widget.ConstraintLayout>

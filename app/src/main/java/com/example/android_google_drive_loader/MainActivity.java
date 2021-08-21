@@ -89,8 +89,13 @@ public class MainActivity extends AppCompatActivity {
 
                     fetchHelper = resFetchHelper;
 
-                    Intent intent = new Intent(this, ConfirmPushActivity.class);
-                    startActivity(intent);
+                    if (!fetchHelper.getLocalFolderFileNamesSet().equals(fetchHelper.getDriveFolderFileNamesSet())) {
+                        Intent intent = new Intent(this, ConfirmPushActivity.class);
+                        startActivity(intent);
+                    }
+                    else {
+                        driveHelper.showToast("Everything is up-to-date");
+                    }
 
                     progressBar.setVisibility(View.INVISIBLE);
                     loadingTextView.setVisibility(View.INVISIBLE);
@@ -214,9 +219,7 @@ public class MainActivity extends AppCompatActivity {
             signIn();
         }
         else {
-            driveHelper = new GoogleDriveHelper(getApplicationContext(),
-                    account,
-                    getResources().getString(R.string.app_name));
+            driveHelper = new GoogleDriveHelper(getApplicationContext(), account, getResources().getString(R.string.app_name));
         }
     }
 
