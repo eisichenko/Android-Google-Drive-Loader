@@ -11,49 +11,38 @@
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="244dp"
         android:layout_height="20dp"
-        android:layout_marginStart="78dp"
-        android:layout_marginTop="328dp"
-        android:layout_marginEnd="79dp"
-        android:layout_marginBottom="328dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.524" />
 
     <TextView
         android:id="@+id/currentOperationFileNameTextView"
         android:layout_width="290dp"
         android:layout_height="28dp"
-        android:layout_marginStart="60dp"
-        android:layout_marginEnd="61dp"
         android:ellipsize="middle"
         android:singleLine="true"
-        android:text="qweqwe"
         android:textColor="#000"
         android:textSize="17sp"
-        app:layout_constraintBottom_toTopOf="@+id/loadingProgressBar"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1.0" />
+        app:layout_constraintVertical_bias="0.485" />
 
     <TextView
         android:id="@+id/currentOperationNameTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="172dp"
-        android:layout_marginTop="281dp"
-        android:layout_marginEnd="181dp"
-        android:layout_marginBottom="35dp"
-        android:text="qweqwe"
         android:textColor="#000"
         android:textSize="17sp"
-        app:layout_constraintBottom_toTopOf="@+id/currentOperationFileNameTextView"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.454"
+        app:layout_constraintHorizontal_bias="0.501"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1.0" />
+        app:layout_constraintVertical_bias="0.377" />
 
     <TextView
         android:id="@+id/warningTextView"
@@ -72,33 +61,27 @@
         android:id="@+id/loadingStatusTextView"
         android:layout_width="222dp"
         android:layout_height="130dp"
-        android:layout_marginStart="171dp"
-        android:layout_marginTop="140dp"
-        android:layout_marginEnd="182dp"
-        android:layout_marginBottom="169dp"
         android:text="@string/loading_status_default_value"
         android:textAlignment="center"
         android:textColor="#FE9000"
         android:textSize="30sp"
-        app:layout_constraintBottom_toTopOf="@+id/currentOperationFileNameTextView"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.097" />
 
     <Button
         android:id="@+id/backMainScreenButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="158dp"
-        android:layout_marginTop="160dp"
-        android:layout_marginEnd="159dp"
-        android:layout_marginBottom="49dp"
         android:text="@string/back_button_value"
         android:visibility="invisible"
-        app:layout_constraintBottom_toTopOf="@+id/warningTextView"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/loadingProgressBar" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.792" />
 
     <TextView
         android:id="@+id/timeTextView"

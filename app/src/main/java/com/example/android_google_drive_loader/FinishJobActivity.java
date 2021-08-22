@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -47,6 +48,7 @@ public class FinishJobActivity extends AppCompatActivity {
                         e.printStackTrace();
 
                         MainActivity.stopwatchState = StopwatchState.STOPPED;
+                        backButton.setVisibility(View.VISIBLE);
                     });
         }
         else if (MainActivity.operationType == OperationType.PULL) {
@@ -67,11 +69,13 @@ public class FinishJobActivity extends AppCompatActivity {
                         e.printStackTrace();
 
                         MainActivity.stopwatchState = StopwatchState.STOPPED;
+                        backButton.setVisibility(View.VISIBLE);
                     });
         }
         else {
             MainActivity.driveHelper.showToast("ERROR: Unknown operation");
             MainActivity.stopwatchState = StopwatchState.STOPPED;
+            backButton.setVisibility(View.VISIBLE);
         }
 
         timeTextView = findViewById(R.id.timeTextView);

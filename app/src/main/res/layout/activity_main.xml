@@ -48,8 +48,8 @@
 
     <TextView
         android:id="@+id/chosenFolder"
-        android:layout_width="182dp"
-        android:layout_height="159dp"
+        android:layout_width="178dp"
+        android:layout_height="173dp"
         android:minWidth="70dp"
         android:text="@string/chosen_folder"
         android:textColor="#000"
@@ -71,10 +71,10 @@
         android:minHeight="48dp"
         app:layout_constraintBottom_toTopOf="@+id/pushButton"
         app:layout_constraintEnd_toEndOf="@+id/chosenFolder"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="0.268"
         app:layout_constraintStart_toStartOf="@+id/chosenFolder"
         app:layout_constraintTop_toBottomOf="@+id/chosenFolder"
-        app:layout_constraintVertical_bias="0.25" />
+        app:layout_constraintVertical_bias="0.693" />
 
     <Button
         android:id="@+id/chooseFolderBtn"
@@ -84,10 +84,38 @@
         android:text="@string/choose_folder_btn_name"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.535"
-        app:layout_constraintStart_toEndOf="@+id/chosenFolder"
+        app:layout_constraintHorizontal_bias="0.904"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.09" />
+        app:layout_constraintVertical_bias="0.084" />
+
+    <Button
+        android:id="@+id/signInButton"
+        android:layout_width="110dp"
+        android:layout_height="48dp"
+        android:backgroundTint="#FFB300"
+        android:text="@string/sign_in_button_value"
+        android:textColor="#000"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.904"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.206" />
+
+    <Button
+        android:id="@+id/logoutButton"
+        android:layout_width="110dp"
+        android:layout_height="48dp"
+        android:backgroundTint="#00BCD4"
+        android:text="@string/logout_button_value"
+        android:textColor="#000"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.904"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.328" />
 
     <ProgressBar
         android:id="@+id/progressBar"
@@ -111,33 +139,5 @@
         app:layout_constraintStart_toStartOf="@+id/progressBar"
         app:layout_constraintTop_toBottomOf="@+id/progressBar"
         app:layout_constraintVertical_bias="0.101" />
-
-    <Button
-        android:id="@+id/signInButton"
-        android:layout_width="110dp"
-        android:layout_height="48dp"
-        android:backgroundTint="#FFB300"
-        android:text="@string/sign_in_button_value"
-        android:textColor="#000"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.555"
-        app:layout_constraintStart_toEndOf="@+id/chosenFolder"
-        app:layout_constraintTop_toBottomOf="@+id/chooseFolderBtn"
-        app:layout_constraintVertical_bias="0.03" />
-
-    <Button
-        android:id="@+id/logoutButton"
-        android:layout_width="110dp"
-        android:layout_height="48dp"
-        android:layout_marginBottom="412dp"
-        android:backgroundTint="#00BCD4"
-        android:text="@string/logout_button_value"
-        android:textColor="#000"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.555"
-        app:layout_constraintStart_toEndOf="@+id/chosenFolder"
-        app:layout_constraintTop_toBottomOf="@+id/signInButton" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

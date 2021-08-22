@@ -68,7 +68,7 @@ public class LocalFileHelper {
             pathStrings.set(0, Environment.getExternalStorageDirectory().getPath());
         }
         else {
-            pathStrings.add(0, "storage");
+            pathStrings.add(0, "/storage");
         }
 
         return pathCombine(pathStrings);

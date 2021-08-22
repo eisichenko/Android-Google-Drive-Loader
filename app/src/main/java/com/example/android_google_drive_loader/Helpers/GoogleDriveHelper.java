@@ -57,7 +57,7 @@ public class GoogleDriveHelper {
     private final int FILE_PAGE_SIZE = 100;
 
     public void showToast(String msg) {
-        Toast.makeText(appContext, msg, Toast.LENGTH_LONG).show();
+        Toast.makeText(appContext, msg, Toast.LENGTH_SHORT).show();
     }
 
     public Exception getExceptionWithError(String msg) {
@@ -204,13 +204,12 @@ public class GoogleDriveHelper {
         String folderId = getIdByName(driveFolderName, DriveType.FOLDER);
         String fileId = getIdByNameInFolder(fileName, DriveType.ANY, folderId);
 
+        DocumentFile downloadedFile = localFolder.createFile(null, fileName);
+
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         drive.files().get(fileId).executeMediaAndDownloadTo(outputStream);
 
-        DocumentFile downloadedFile = localFolder.createFile(null, fileName);
-
-        OutputStream fileOutputStream =
-                    new FileOutputStream(LocalFileHelper.getFileFromDocumentFile(downloadedFile));
+        OutputStream fileOutputStream = appContext.getContentResolver().openOutputStream(downloadedFile.getUri());
 
         outputStream.writeTo(fileOutputStream);
 
