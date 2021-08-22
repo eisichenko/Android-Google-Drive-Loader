@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.android_google_drive_loader.Helpers.OperationType;
 import com.example.android_google_drive_loader.Helpers.SetOperationsHelper;
 
 import java.util.ArrayList;
@@ -90,6 +91,7 @@ public class ConfirmPushActivity extends AppCompatActivity {
 
         startPushButton = findViewById(R.id.startPushButton);
         startPushButton.setOnClickListener(view -> {
+            MainActivity.operationType = OperationType.PUSH;
             Intent intent = new Intent(this, FinishJobActivity.class);
             startActivity(intent);
         });

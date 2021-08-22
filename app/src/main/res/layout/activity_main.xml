@@ -9,29 +9,29 @@
 
     <Button
         android:id="@+id/pullButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="121dp"
+        android:layout_height="50dp"
         android:text="@string/pull_btn_name"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.743"
+        app:layout_constraintHorizontal_bias="0.815"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.672" />
+        app:layout_constraintVertical_bias="0.671" />
 
     <Button
         android:id="@+id/pushButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="121dp"
+        android:layout_height="50dp"
         android:backgroundTint="#68E111"
         android:text="@string/push_btn_name"
         android:textColor="#000"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/pullButton"
-        app:layout_constraintHorizontal_bias="0.585"
+        app:layout_constraintHorizontal_bias="0.684"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.672" />
+        app:layout_constraintVertical_bias="0.671" />
 
     <TextView
         android:id="@+id/chosenFolderLabel"
@@ -102,15 +102,42 @@
         app:layout_constraintVertical_bias="0.827" />
 
     <TextView
-        android:id="@+id/loadingTextView"
+        android:id="@+id/currentFetchOperationTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/loading_text_view_value"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/progressBar"
         app:layout_constraintHorizontal_bias="0.6"
         app:layout_constraintStart_toStartOf="@+id/progressBar"
         app:layout_constraintTop_toBottomOf="@+id/progressBar"
         app:layout_constraintVertical_bias="0.101" />
+
+    <Button
+        android:id="@+id/signInButton"
+        android:layout_width="110dp"
+        android:layout_height="48dp"
+        android:backgroundTint="#FFB300"
+        android:text="@string/sign_in_button_value"
+        android:textColor="#000"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.555"
+        app:layout_constraintStart_toEndOf="@+id/chosenFolder"
+        app:layout_constraintTop_toBottomOf="@+id/chooseFolderBtn"
+        app:layout_constraintVertical_bias="0.03" />
+
+    <Button
+        android:id="@+id/logoutButton"
+        android:layout_width="110dp"
+        android:layout_height="48dp"
+        android:layout_marginBottom="412dp"
+        android:backgroundTint="#00BCD4"
+        android:text="@string/logout_button_value"
+        android:textColor="#000"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.555"
+        app:layout_constraintStart_toEndOf="@+id/chosenFolder"
+        app:layout_constraintTop_toBottomOf="@+id/signInButton" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -21,9 +21,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.android_google_drive_loader.Helpers.FetchHelper;
 import com.example.android_google_drive_loader.Helpers.LocalFileHelper;
+import com.example.android_google_drive_loader.Helpers.OperationType;
+import com.example.android_google_drive_loader.Helpers.StopwatchState;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -43,10 +46,13 @@ public class MainActivity extends AppCompatActivity {
     public static DocumentFile pickedDir;
     public static String driveFolderName;
     public static FetchHelper fetchHelper;
+    public static StopwatchState stopwatchState;
 
     public Button pushButton;
     public Button pullButton;
     public Button chooseButton;
+    public Button signInButton;
+    public Button logoutButton;
     public TextView chosenFolderTextView;
     public EditText driveFolderNameEditText;
     public TextView loadingTextView;
@@ -58,6 +64,8 @@ public class MainActivity extends AppCompatActivity {
 
     public SharedPreferences settings;
 
+    public static OperationType operationType = OperationType.NONE;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,13 +75,19 @@ public class MainActivity extends AppCompatActivity {
         driveFolderNameEditText = findViewById(R.id.driveFolderEditText);
 
         progressBar = findViewById(R.id.progressBar);
-        loadingTextView = findViewById(R.id.loadingTextView);
+        loadingTextView = findViewById(R.id.currentFetchOperationTextView);
 
         progressBar.setVisibility(View.INVISIBLE);
         loadingTextView.setVisibility(View.INVISIBLE);
 
         pushButton.setOnClickListener(view -> {
             try {
+                GoogleSignInAccount currentAccount = GoogleSignIn.getLastSignedInAccount(getApplicationContext());
+
+                if (currentAccount == null) {
+                    throw new Exception("ERROR: Please, sign in with google account");
+                }
+
                 driveFolderName = driveFolderNameEditText.getText().toString();
 
                 if (driveFolderName.length() == 0) {
@@ -85,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
 
                 settings.edit().putString(DRIVE_DIRECTORY_URI_CACHE_NAME, driveFolderName).apply();
 
-                driveHelper.fetchData(pickedDir, driveFolderName).addOnSuccessListener(resFetchHelper -> {
+                driveHelper.fetchData(this, pickedDir, driveFolderName).addOnSuccessListener(resFetchHelper -> {
 
                     fetchHelper = resFetchHelper;
 
@@ -114,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
             catch (Exception e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
-                driveHelper.showToast(e.getMessage());
+                Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
 
                 progressBar.setVisibility(View.INVISIBLE);
                 loadingTextView.setVisibility(View.INVISIBLE);
@@ -124,6 +138,12 @@ public class MainActivity extends AppCompatActivity {
         pullButton = findViewById(R.id.pullButton);
         pullButton.setOnClickListener(view -> {
             try {
+                GoogleSignInAccount currentAccount = GoogleSignIn.getLastSignedInAccount(getApplicationContext());
+
+                if (currentAccount == null) {
+                    throw new Exception("ERROR: Please, sign in with google account");
+                }
+
                 driveFolderName = driveFolderNameEditText.getText().toString();
 
                 if (driveFolderName.length() == 0) {
@@ -135,12 +155,17 @@ public class MainActivity extends AppCompatActivity {
 
                 settings.edit().putString(DRIVE_DIRECTORY_URI_CACHE_NAME, driveFolderName).apply();
 
-                driveHelper.fetchData(pickedDir, driveFolderName).addOnSuccessListener(resFetchHelper -> {
+                driveHelper.fetchData(this, pickedDir, driveFolderName).addOnSuccessListener(resFetchHelper -> {
 
                     fetchHelper = resFetchHelper;
 
-                    Intent intent = new Intent(this, ConfirmPullActivity.class);
-                    startActivity(intent);
+                    if (!fetchHelper.getLocalFolderFileNamesSet().equals(fetchHelper.getDriveFolderFileNamesSet())) {
+                        Intent intent = new Intent(this, ConfirmPullActivity.class);
+                        startActivity(intent);
+                    }
+                    else {
+                        driveHelper.showToast("Everything is up-to-date");
+                    }
 
                     progressBar.setVisibility(View.INVISIBLE);
                     loadingTextView.setVisibility(View.INVISIBLE);
@@ -159,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
             catch (Exception e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
-                driveHelper.showToast(e.getMessage());
+                Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
 
                 progressBar.setVisibility(View.INVISIBLE);
                 loadingTextView.setVisibility(View.INVISIBLE);
@@ -207,6 +232,36 @@ public class MainActivity extends AppCompatActivity {
             driveFolderNameEditText.setText(driveFolderName);
         }
 
+        signInButton = findViewById(R.id.signInButton);
+        signInButton.setOnClickListener(view -> {
+            GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(getApplicationContext());
+
+            if (account == null) {
+                signIn();
+            }
+            else {
+                Toast.makeText(this, "Already signed up", Toast.LENGTH_LONG).show();
+            }
+        });
+
+        logoutButton = findViewById(R.id.logoutButton);
+        logoutButton.setOnClickListener(view -> {
+            GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(getApplicationContext());
+
+            if (account == null) {
+                Toast.makeText(this, "Already logged out", Toast.LENGTH_LONG).show();
+            }
+            else {
+                GoogleSignInClient googleSignInClient = buildGoogleSignInClient();
+                googleSignInClient.signOut().addOnSuccessListener(unused -> {
+                    Toast.makeText(getApplicationContext(),"Successfully logged out",Toast.LENGTH_LONG).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getApplicationContext(), "ERROR: " + e.getMessage(),Toast.LENGTH_LONG).show();
+                    e.printStackTrace();
+                });
+            }
+        });
     }
 
     @Override

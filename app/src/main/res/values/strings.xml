@@ -6,12 +6,17 @@
     <string name="chosen_folder">None</string>
     <string name="choose_folder_btn_name">Choose</string>
     <string name="edit_text_drive_folder_hint">Drive folder name ...</string>
-    <string name="loading_text_view_value">Fetching data...</string>
     <string name="upload_text_view_value">Upload from drive list</string>
     <string name="delete_on_drive_text_view_value">Delete on drive list</string>
     <string name="start_push_button_value">Start Push</string>
     <string name="none_list_items_value">None</string>
-    <string name="warning_value">Please, don\'t close your app while loading</string>
+    <string name="warning_value">Please, don\'t close your app while loading (but you can hide it)</string>
     <string name="loading_status_default_value">Loading 0%</string>
     <string name="back_button_value">Back</string>
+    <string name="download_from_drive_value">Download from drive list</string>
+    <string name="delete_in_local_storage_value">Delete in local storage list</string>
+    <string name="start_pull_button_value">Start pull</string>
+    <string name="sign_in_button_value">Sign in</string>
+    <string name="logout_button_value">Logout</string>
+    <string name="time_text_view_value">Time :</string>
 </resources>

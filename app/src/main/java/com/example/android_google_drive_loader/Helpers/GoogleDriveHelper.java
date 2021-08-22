@@ -16,6 +16,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.documentfile.provider.DocumentFile;
 
+import com.example.android_google_drive_loader.ConfirmPullActivity;
 import com.example.android_google_drive_loader.ConfirmPushActivity;
 import com.example.android_google_drive_loader.R;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -208,10 +209,12 @@ public class GoogleDriveHelper {
 
         DocumentFile downloadedFile = localFolder.createFile(null, fileName);
 
-        try(OutputStream fileOutputStream =
-                    new FileOutputStream(LocalFileHelper.getFileFromDocumentFile(downloadedFile))) {
-            outputStream.writeTo(fileOutputStream);
-        }
+        OutputStream fileOutputStream =
+                    new FileOutputStream(LocalFileHelper.getFileFromDocumentFile(downloadedFile));
+
+        outputStream.writeTo(fileOutputStream);
+
+        outputStream.close();
 
         return true;
     }
@@ -257,15 +260,41 @@ public class GoogleDriveHelper {
         return helper;
     }
 
+    public FetchHelper getFetcher(Activity activity, DocumentFile localFolder, String driveFolderName) throws Exception {
+        TextView currentFetchOperationTextView = activity.findViewById(R.id.currentFetchOperationTextView);
 
-    public Task<FetchHelper> fetchData(DocumentFile localFolder, String driveFolderName) {
+        activity.runOnUiThread(() -> currentFetchOperationTextView.setText("Getting drive files..."));
+        List<String> driveFolderFileNames = getFolderFileNames(driveFolderName);
+        HashSet<String> driveFolderFileNamesSet = new HashSet<>(driveFolderFileNames);
+
+        if (driveFolderFileNamesSet.size() != driveFolderFileNames.size()) {
+            throw getExceptionWithError("Duplicate items in the drive folder");
+        }
+
+        activity.runOnUiThread(() -> currentFetchOperationTextView.setText("Getting local files..."));
+
+        List<String> localFolderFileNames = LocalFileHelper.getFolderFileNames(localFolder);
+        HashSet<String> localFolderFileNamesSet = new HashSet<>(localFolderFileNames);
+
+        if (localFolderFileNamesSet.size() != localFolderFileNames.size()) {
+            throw getExceptionWithError("Duplicate items in local folder");
+        }
+
+        FetchHelper helper = new FetchHelper();
+        helper.setDriveFolderFileNamesSet(driveFolderFileNamesSet);
+        helper.setLocalFolderFileNamesSet(localFolderFileNamesSet);
+
+        return helper;
+    }
+
+    public Task<FetchHelper> fetchData(Activity activity, DocumentFile localFolder, String driveFolderName) {
         return Tasks.call(executor, () -> {
 
             if (!isNetworkAvailable()) {
                 throw getExceptionWithError("Can't connect to network");
             }
 
-            return getFetcher(localFolder, driveFolderName);
+            return getFetcher(activity, localFolder, driveFolderName);
         });
     }
 
@@ -277,6 +306,7 @@ public class GoogleDriveHelper {
             ProgressBar loadingProgressBar = activity.findViewById(R.id.loadingProgressBar);
             TextView loadingStatusTextView = activity.findViewById(R.id.loadingStatusTextView);
             Button backButton = activity.findViewById(R.id.backMainScreenButton);
+            TextView warningTextView = activity.findViewById(R.id.warningTextView);
 
             if (!isNetworkAvailable()) {
                 throw getExceptionWithError("Can't connect to network");
@@ -333,7 +363,6 @@ public class GoogleDriveHelper {
                         loadingProgressBar.setProgress(percent);
                         loadingStatusTextView.setText("Loading " + percent + "%");
                     });
-
                 }
                 else {
                     System.out.println("DELETE: " + name + " FAIL");
@@ -352,34 +381,54 @@ public class GoogleDriveHelper {
                     loadingStatusTextView.setTextColor(Color.parseColor("#ff0000"));
                 }
                 backButton.setVisibility(View.VISIBLE);
+                warningTextView.setVisibility(View.INVISIBLE);
+                currentOperationNameTextView.setText("DONE");
+                currentOperationFileNameTextView.setVisibility(View.INVISIBLE);
             });
 
             return result;
         });
     }
 
-    public Task<Boolean> pull(FetchHelper fetchHelper, DocumentFile localFolder, String driveFolderName) {
+    public Task<Boolean> pull(Activity activity, DocumentFile localFolder, String driveFolderName) {
         return Tasks.call(executor, () -> {
+
+            TextView currentOperationNameTextView = activity.findViewById(R.id.currentOperationNameTextView);
+            TextView currentOperationFileNameTextView = activity.findViewById(R.id.currentOperationFileNameTextView);
+            ProgressBar loadingProgressBar = activity.findViewById(R.id.loadingProgressBar);
+            TextView loadingStatusTextView = activity.findViewById(R.id.loadingStatusTextView);
+            Button backButton = activity.findViewById(R.id.backMainScreenButton);
+            TextView warningTextView = activity.findViewById(R.id.warningTextView);
 
             if (!isNetworkAvailable()) {
                 throw getExceptionWithError("Can't connect to network");
             }
 
-            HashSet<String> localFolderFileNamesSet = fetchHelper.getLocalFolderFileNamesSet();
-            HashSet<String> driveFolderFileNamesSet = fetchHelper.getDriveFolderFileNamesSet();
+            HashSet<String> downloadFromDriveFiles = ConfirmPullActivity.downloadFromDriveFiles;
+            HashSet<String> deleteInLocalFiles = ConfirmPullActivity.deleteInLocalFiles;
 
-            HashSet<String> deleteLocalFiles = SetOperationsHelper.
-                    relativeComplement(localFolderFileNamesSet, driveFolderFileNamesSet);
-
-            HashSet<String> downloadDriveFiles = SetOperationsHelper.
-                    relativeComplement(driveFolderFileNamesSet, localFolderFileNamesSet);
+            final Integer totalSize = downloadFromDriveFiles.size() + deleteInLocalFiles.size();
+            Integer currentCompleted = 0;
 
             System.out.println("DOWNLOAD:");
-            System.out.println(downloadDriveFiles);
+            System.out.println(downloadFromDriveFiles);
 
-            for (String name : downloadDriveFiles) {
+            for (String name : downloadFromDriveFiles) {
+                activity.runOnUiThread(() -> {
+                    currentOperationNameTextView.setText("Downloading from drive");
+                    currentOperationFileNameTextView.setText(name);
+                });
+
                 if (downloadDriveFile(localFolder, driveFolderName, name)) {
                     System.out.println("DOWNLOAD: " + name + " OK");
+
+                    currentCompleted++;
+                    int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
+
+                    activity.runOnUiThread(() -> {
+                        loadingProgressBar.setProgress(percent);
+                        loadingStatusTextView.setText("Loading " + percent + "%");
+                    });
                 }
                 else {
                     System.out.println("DOWNLOAD: " + name + " FAIL");
@@ -387,18 +436,48 @@ public class GoogleDriveHelper {
             }
 
             System.out.println("DELETE:");
-            System.out.println(deleteLocalFiles);
+            System.out.println(deleteInLocalFiles);
 
-            for (String name : deleteLocalFiles) {
+            for (String name : deleteInLocalFiles) {
+                activity.runOnUiThread(() -> {
+                    currentOperationNameTextView.setText("Deleting in local storage");
+                    currentOperationFileNameTextView.setText(name);
+                });
+
                 if (deleteLocalFile(localFolder, name)) {
                     System.out.println("DELETE: " + name + " OK");
+
+                    currentCompleted++;
+                    int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
+
+                    activity.runOnUiThread(() -> {
+                        loadingProgressBar.setProgress(percent);
+                        loadingStatusTextView.setText("Loading " + percent + "%");
+                    });
                 }
                 else {
                     System.out.println("DELETE: " + name + " FAIL");
                 }
             }
 
-            return testLocalAndDriveFolders(localFolder, driveFolderName);
+            Boolean result = testLocalAndDriveFolders(localFolder, driveFolderName);
+
+            activity.runOnUiThread(() -> {
+                if (result) {
+                    loadingStatusTextView.setText("SUCCESS");
+                    loadingStatusTextView.setTextColor(Color.parseColor("#00ff00"));
+                }
+                else {
+                    loadingStatusTextView.setText("FAIL (folders are not equal)");
+                    loadingStatusTextView.setTextColor(Color.parseColor("#ff0000"));
+                }
+                backButton.setVisibility(View.VISIBLE);
+                warningTextView.setVisibility(View.INVISIBLE);
+                currentOperationNameTextView.setText("DONE");
+                currentOperationFileNameTextView.setVisibility(View.INVISIBLE);
+            });
+
+            return result;
         });
     }
 }
