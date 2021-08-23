@@ -39,7 +39,10 @@ public class ConfirmPushActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         uploadFromDriveRecyclerView = findViewById(R.id.uploadFromDriveRecyclerView);
+        uploadFromDriveRecyclerView.setFocusable(false);
+
         deleteOnDriveRecyclerView = findViewById(R.id.deleteFromDriveRecyclerView);
+        deleteOnDriveRecyclerView.setFocusable(false);
 
         DividerItemDecoration decoration = new DividerItemDecoration(getApplicationContext(),
                 DividerItemDecoration.VERTICAL);

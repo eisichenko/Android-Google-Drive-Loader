@@ -39,7 +39,10 @@ public class ConfirmPullActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         downloadFromDriveRecyclerView = findViewById(R.id.downloadFromDriveRecyclerView);
+        downloadFromDriveRecyclerView.setFocusable(false);
+
         deleteInLocalRecyclerView = findViewById(R.id.deleteInLocalRecyclerView);
+        deleteInLocalRecyclerView.setFocusable(false);
 
         DividerItemDecoration decoration = new DividerItemDecoration(getApplicationContext(),
                 DividerItemDecoration.VERTICAL);

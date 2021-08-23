@@ -25,6 +25,7 @@
         android:singleLine="true"
         android:textColor="#000"
         android:textSize="17sp"
+        android:textAlignment="center"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
