@@ -95,10 +95,10 @@ public class GoogleDriveHelper {
         String query;
 
         if (fileType == DriveType.ANY) {
-            query = "name = '" + name + "' and trashed = false";
+            query = "name = '" + name.replace("'", "\\'") + "' and trashed = false";
         }
         else {
-            query = "name = '" + name + "' and trashed = false and mimeType = 'application/vnd.google-apps.folder'";
+            query = "name = '" + name.replace("'", "\\'") + "' and trashed = false and mimeType = 'application/vnd.google-apps.folder'";
         }
 
         FileList result = drive.files().list()
@@ -122,10 +122,10 @@ public class GoogleDriveHelper {
         String query;
 
         if (fileType == DriveType.ANY) {
-            query = "'" + driveFolderId + "' in parents and name = '" + name + "' and trashed = false";
+            query = "'" + driveFolderId + "' in parents and name = '" + name.replace("'", "\\'") + "' and trashed = false";
         }
         else {
-            query = "'" + driveFolderId + "' in parents and name = '" + name + "' and trashed = false and mimeType = 'application/vnd.google-apps.folder'";
+            query = "'" + driveFolderId + "' in parents and name = '" + name.replace("'", "\\'") + "' and trashed = false and mimeType = 'application/vnd.google-apps.folder'";
         }
 
         FileList result = drive.files().list()
@@ -201,19 +201,30 @@ public class GoogleDriveHelper {
     }
 
     public Boolean downloadDriveFile(DocumentFile localFolder, String driveFolderName, String fileName) throws Exception {
-        String folderId = getIdByName(driveFolderName, DriveType.FOLDER);
-        String fileId = getIdByNameInFolder(fileName, DriveType.ANY, folderId);
+        try {
+            String folderId = getIdByName(driveFolderName, DriveType.FOLDER);
+            String fileId = getIdByNameInFolder(fileName, DriveType.ANY, folderId);
 
-        DocumentFile downloadedFile = localFolder.createFile(null, fileName);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            drive.files().get(fileId).executeMediaAndDownloadTo(outputStream);
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        drive.files().get(fileId).executeMediaAndDownloadTo(outputStream);
+            DocumentFile downloadedFile = localFolder.createFile(null, fileName);
 
-        OutputStream fileOutputStream = appContext.getContentResolver().openOutputStream(downloadedFile.getUri());
+            OutputStream fileOutputStream = appContext.getContentResolver().openOutputStream(downloadedFile.getUri());
 
-        outputStream.writeTo(fileOutputStream);
+            outputStream.writeTo(fileOutputStream);
 
-        outputStream.close();
+            outputStream.close();
+        }
+        catch (Exception e) {
+            DocumentFile createdFile = localFolder.findFile(fileName);
+
+            if (createdFile != null) {
+                createdFile.delete();
+            }
+
+            throw e;
+        }
 
         return true;
     }
