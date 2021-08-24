@@ -1,19 +1,25 @@
 package com.example.android_google_drive_loader;
 
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
-
-import com.example.android_google_drive_loader.Helpers.OperationType;
+import com.example.android_google_drive_loader.Enums.OperationType;
+import com.example.android_google_drive_loader.Enums.Theme;
 import com.example.android_google_drive_loader.Helpers.SetOperationsHelper;
 
 import java.util.ArrayList;
@@ -33,7 +39,57 @@ public class ConfirmPullActivity extends AppCompatActivity {
     private Button startPullButton;
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater menuInflater = getMenuInflater();
+        menuInflater.inflate(R.menu.main_menu, menu);
+        MenuItem themeItem = menu.findItem(R.id.theme_menu);
+
+        String themeString = MainActivity.settings.getString(MainActivity.THEME_CACHE_NAME, null);
+
+        if (themeString != null) {
+            if (themeString.equals(Theme.DAY.toString())) {
+                themeItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_theme_night));
+            }
+            else {
+                themeItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_theme_day));
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.theme_menu:
+                if (MainActivity.currentTheme == Theme.DAY) {
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                    MainActivity.settings.edit().putString(MainActivity.THEME_CACHE_NAME, Theme.NIGHT.toString()).apply();
+                    item.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_theme_day));
+                    MainActivity.currentTheme = Theme.NIGHT;
+                }
+                else {
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                    MainActivity.settings.edit().putString(MainActivity.THEME_CACHE_NAME, Theme.DAY.toString()).apply();
+                    item.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_theme_night));
+                    MainActivity.currentTheme = Theme.DAY;
+                }
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
+        if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
+            setTheme(R.style.Theme_Night);
+        }
+        else {
+            setTheme(R.style.Theme_Day);
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_confirm_pull);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);

@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginTop="10dp"
     tools:context=".ConfirmPushActivity"
+    android:background="?attr/main_background_color"
     android:orientation="vertical">
 
     <androidx.core.widget.NestedScrollView
@@ -27,8 +26,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerInParent="true"
+                    android:layout_marginTop="10dp"
                     android:text="@string/download_from_drive_value"
-                    android:textColor="#000"
+                    android:textColor="?attr/main_text_color"
                     android:textSize="20sp"
                     android:textStyle="bold" />
             </RelativeLayout>
@@ -76,8 +76,8 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_centerInParent="true"
+                            android:textColor="?attr/main_text_color"
                             android:text="@string/delete_in_local_storage_value"
-                            android:textColor="#000"
                             android:textSize="20sp"
                             android:textStyle="bold" />
                     </RelativeLayout>

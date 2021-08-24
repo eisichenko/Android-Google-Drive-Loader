@@ -16,7 +16,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/cool"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AndroidGoogleDriveLoader">
+        android:theme="@style/Theme.Day">
         <activity
             android:name=".FinishJobActivity"
             android:exported="true" />

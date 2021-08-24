@@ -1,26 +1,40 @@
 package com.example.android_google_drive_loader;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.example.android_google_drive_loader.Helpers.OperationType;
-import com.example.android_google_drive_loader.Helpers.StopwatchState;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.content.ContextCompat;
+
+import com.example.android_google_drive_loader.Enums.OperationType;
+import com.example.android_google_drive_loader.Enums.StopwatchState;
+import com.example.android_google_drive_loader.Enums.Theme;
 
 public class FinishJobActivity extends AppCompatActivity {
 
-    Button backButton;
-    TextView timeTextView;
+    public Button backButton;
+    public TextView timeTextView;
 
-    Integer currentTimeInSeconds = 0;
+    public Integer currentTimeInSeconds = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
+            setTheme(R.style.Theme_Night);
+        }
+        else {
+            setTheme(R.style.Theme_Day);
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_finish_job);
 

@@ -19,4 +19,5 @@
     <string name="sign_in_button_value">Sign in</string>
     <string name="logout_button_value">Logout</string>
     <string name="time_text_view_value">Time :</string>
+    <string name="theme_menu_value">Theme</string>
 </resources>

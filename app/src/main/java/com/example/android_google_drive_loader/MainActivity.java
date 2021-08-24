@@ -1,21 +1,22 @@
 package com.example.android_google_drive_loader;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.documentfile.provider.DocumentFile;
-
 import android.Manifest;
+import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -23,17 +24,24 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.documentfile.provider.DocumentFile;
+
+import com.example.android_google_drive_loader.Enums.Theme;
 import com.example.android_google_drive_loader.Helpers.FetchHelper;
+import com.example.android_google_drive_loader.Helpers.GoogleDriveHelper;
 import com.example.android_google_drive_loader.Helpers.LocalFileHelper;
-import com.example.android_google_drive_loader.Helpers.OperationType;
-import com.example.android_google_drive_loader.Helpers.StopwatchState;
+import com.example.android_google_drive_loader.Enums.OperationType;
+import com.example.android_google_drive_loader.Enums.StopwatchState;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.Scope;
-
-import com.example.android_google_drive_loader.Helpers.GoogleDriveHelper;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -47,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
     public static String driveFolderName;
     public static FetchHelper fetchHelper;
     public static StopwatchState stopwatchState;
+    public static Theme currentTheme = Theme.DAY;
 
     public Button pushButton;
     public Button pullButton;
@@ -61,13 +70,69 @@ public class MainActivity extends AppCompatActivity {
     public final String APP_PREFERENCES_NAME = "gd_loader_settings";
     public final String LOCAL_DIRECTORY_URI_CACHE_NAME = "LocalDirectory";
     public final String DRIVE_DIRECTORY_URI_CACHE_NAME = "DriveDirectory";
+    public static final String THEME_CACHE_NAME = "Theme";
 
-    public SharedPreferences settings;
+    public static SharedPreferences settings;
 
     public static OperationType operationType = OperationType.NONE;
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater menuInflater = getMenuInflater();
+        menuInflater.inflate(R.menu.main_menu, menu);
+        MenuItem themeItem = menu.findItem(R.id.theme_menu);
+
+        if (currentTheme == Theme.DAY) {
+            themeItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_theme_night));
+        }
+        else {
+            themeItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_theme_day));
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.theme_menu:
+                if (currentTheme == Theme.DAY) {
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                    settings.edit().putString(THEME_CACHE_NAME, Theme.NIGHT.toString()).apply();
+                    item.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_theme_day));
+                    currentTheme = Theme.NIGHT;
+                }
+                else {
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                    settings.edit().putString(THEME_CACHE_NAME, Theme.DAY.toString()).apply();
+                    item.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_theme_night));
+                    currentTheme = Theme.DAY;
+                }
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
+        settings = getSharedPreferences(APP_PREFERENCES_NAME, Context.MODE_PRIVATE);
+
+        String themeString = settings.getString(THEME_CACHE_NAME, null);
+
+        if (themeString != null) {
+            if (themeString.equals(Theme.DAY.toString())) {
+                currentTheme = Theme.DAY;
+                setTheme(R.style.Theme_Day);
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+            }
+            else {
+                currentTheme = Theme.NIGHT;
+                setTheme(R.style.Theme_Night);
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+            }
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -216,7 +281,6 @@ public class MainActivity extends AppCompatActivity {
 
         chosenFolderTextView = findViewById(R.id.chosenFolder);
 
-        settings = getSharedPreferences(APP_PREFERENCES_NAME, Context.MODE_PRIVATE);
         String pickedDirUri = settings.getString(LOCAL_DIRECTORY_URI_CACHE_NAME, "");
 
         if (pickedDirUri.length() > 0) {
