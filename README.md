@@ -5,3 +5,5 @@
 - Credentials you can get here https://console.cloud.google.com/apis/credentials.
 
 - Add target user to `test users` in OAuth consent screen tab to provide access to your drive.
+
+- Enabled `day`and `night` themes.
