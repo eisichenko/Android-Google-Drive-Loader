@@ -40,6 +40,7 @@ public class FinishJobActivity extends AppCompatActivity {
 
         backButton = findViewById(R.id.backMainScreenButton);
         backButton.setOnClickListener(view -> {
+            MainActivity.operationType = OperationType.NONE;
             Intent intent = new Intent(this, MainActivity.class);
             startActivity(intent);
         });
@@ -56,6 +57,7 @@ public class FinishJobActivity extends AppCompatActivity {
                             }
 
                             MainActivity.stopwatchState = StopwatchState.STOPPED;
+                            MainActivity.operationType = OperationType.NONE;
                         })
                         .addOnFailureListener(e -> {
                             MainActivity.msgHelper.showToast(e.getMessage());
@@ -63,6 +65,7 @@ public class FinishJobActivity extends AppCompatActivity {
                             e.printStackTrace();
 
                             MainActivity.stopwatchState = StopwatchState.STOPPED;
+                            MainActivity.operationType = OperationType.NONE;
                             backButton.setVisibility(View.VISIBLE);
                         });
             }
@@ -77,18 +80,19 @@ public class FinishJobActivity extends AppCompatActivity {
                             }
 
                             MainActivity.stopwatchState = StopwatchState.STOPPED;
+                            MainActivity.operationType = OperationType.NONE;
                         })
                         .addOnFailureListener(e -> {
                             MainActivity.msgHelper.showToast(e.getMessage());
                             System.out.println(e.getMessage());
                             e.printStackTrace();
 
+                            MainActivity.operationType = OperationType.NONE;
                             MainActivity.stopwatchState = StopwatchState.STOPPED;
                             backButton.setVisibility(View.VISIBLE);
                         });
             }
             else {
-                MainActivity.msgHelper.showToast("ERROR: Unknown operation");
                 MainActivity.stopwatchState = StopwatchState.STOPPED;
                 backButton.setVisibility(View.VISIBLE);
             }

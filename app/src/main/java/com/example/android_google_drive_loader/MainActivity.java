@@ -171,12 +171,20 @@ public class MainActivity extends AppCompatActivity {
 
                     fetchHelper = resFetchHelper;
 
-                    if (!fetchHelper.getLocalFolderFileNamesSet().equals(fetchHelper.getDriveFolderFileNamesSet())) {
-                        Intent intent = new Intent(this, ConfirmPushActivity.class);
-                        startActivity(intent);
-                    }
-                    else {
-                        msgHelper.showToast("Everything is up-to-date");
+                    operationType = OperationType.PUSH;
+
+                    try {
+                        if (!fetchHelper.mapsAreEqual()) {
+                            Intent intent = new Intent(this, ConfirmPushActivity.class);
+                            startActivity(intent);
+                        }
+                        else {
+                            msgHelper.showToast("Everything is up-to-date");
+                        }
+                    } catch (Exception e) {
+                        msgHelper.showToast(e.getMessage());
+                        System.out.println(e.getMessage());
+                        e.printStackTrace();
                     }
 
                     progressBar.setVisibility(View.INVISIBLE);
@@ -227,12 +235,20 @@ public class MainActivity extends AppCompatActivity {
 
                     fetchHelper = resFetchHelper;
 
-                    if (!fetchHelper.getLocalFolderFileNamesSet().equals(fetchHelper.getDriveFolderFileNamesSet())) {
-                        Intent intent = new Intent(this, ConfirmPullActivity.class);
-                        startActivity(intent);
-                    }
-                    else {
-                        msgHelper.showToast("Everything is up-to-date");
+                    operationType = OperationType.PULL;
+
+                    try {
+                        if (!fetchHelper.mapsAreEqual()) {
+                            Intent intent = new Intent(this, ConfirmPullActivity.class);
+                            startActivity(intent);
+                        }
+                        else {
+                            msgHelper.showToast("Everything is up-to-date");
+                        }
+                    } catch (Exception e) {
+                        msgHelper.showToast(e.getMessage());
+                        System.out.println(e.getMessage());
+                        e.printStackTrace();
                     }
 
                     progressBar.setVisibility(View.INVISIBLE);

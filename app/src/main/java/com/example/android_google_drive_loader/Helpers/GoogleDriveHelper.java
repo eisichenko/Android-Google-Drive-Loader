@@ -1,6 +1,5 @@
 package com.example.android_google_drive_loader.Helpers;
 
-import static com.example.android_google_drive_loader.MainActivity.fetchHelper;
 import static com.example.android_google_drive_loader.MainActivity.msgHelper;
 
 import android.app.Activity;
@@ -12,13 +11,13 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.documentfile.provider.DocumentFile;
 
 import com.example.android_google_drive_loader.ConfirmPullActivity;
 import com.example.android_google_drive_loader.ConfirmPushActivity;
 import com.example.android_google_drive_loader.Enums.DriveType;
+import com.example.android_google_drive_loader.MainActivity;
 import com.example.android_google_drive_loader.R;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.tasks.Task;
@@ -39,6 +38,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -62,12 +62,39 @@ public class GoogleDriveHelper {
     }
 
     public List<File> filterByName(List<File> list, String name) {
-        System.out.println(list);
         List<File> res = new ArrayList<>();
         for(File file : list) {
             if (name.equals(file.getName())) {
                 res.add(file);
             }
+        }
+        return res;
+    }
+
+    public static List<String> getDriveNamesFromFiles(List<File> files) {
+        List<String> res = new ArrayList<>();
+
+        for (File file : files) {
+            res.add(file.getName());
+        }
+
+        return res;
+    }
+
+    public static HashSet<String> getDriveNamesFromSet(HashSet<File> files) {
+        HashSet<String> res = new HashSet<>();
+
+        for (File file : files) {
+            res.add(file.getName());
+        }
+
+        return res;
+    }
+
+    public static int getMapSize(HashMap<File, HashSet<File>> driveFiles) {
+        int res = 0;
+        for (HashSet<File> set : driveFiles.values()) {
+            res += set.size();
         }
         return res;
     }
@@ -90,7 +117,7 @@ public class GoogleDriveHelper {
         this.executor = Executors.newSingleThreadExecutor();
     }
 
-    public String getIdByName(String name, DriveType fileType) throws Exception {
+    public File getFileByName(String name, DriveType fileType) throws Exception {
         String query;
 
         if (fileType == DriveType.ANY) {
@@ -114,69 +141,82 @@ public class GoogleDriveHelper {
             throw msgHelper.getExceptionWithError("Folder " + name + " on the drive was not found");
         }
 
-        return files.get(0).getId();
+        return files.get(0);
     }
 
-    public String getIdByNameInFolder(String name, DriveType fileType, String driveFolderId) throws Exception {
-        String query;
-
-        if (fileType == DriveType.ANY) {
-            query = "'" + driveFolderId + "' in parents and name = '" + name.replace("'", "\\'") + "' and trashed = false";
-        }
-        else {
-            query = "'" + driveFolderId + "' in parents and name = '" + name.replace("'", "\\'") + "' and trashed = false and mimeType = 'application/vnd.google-apps.folder'";
-        }
-
-        FileList result = drive.files().list()
-                .setFields("files(id, name)")
-                .setQ(query).execute();
-
-        List<File> files = filterByName(result.getFiles(), name);
-
-        if (files.size() > 1) {
-            throw msgHelper.getExceptionWithError("Duplicate folders " + name);
-        }
-
-        if (files.size() == 0) {
-            throw msgHelper.getExceptionWithError("Folder " + name + " on the drive was not found");
-        }
-
-        return files.get(0).getId();
-    }
-
-    public List<String> getFolderFileNames(String folderName) throws Exception {
-        String folderId = getIdByName(folderName, DriveType.FOLDER);
-
-        String query = "'" + folderId + "' in parents and mimeType != 'application/vnd.google-apps.folder' and trashed = false";
+    public HashSet<File> getFolderFiles(File folderFile) throws Exception {
+        String query = "'" + folderFile.getId() + "' in parents and mimeType != 'application/vnd.google-apps.folder' and trashed = false";
 
         Drive.Files.List request = drive.files().list()
                 .setPageSize(FILE_PAGE_SIZE)
                 .setFields("nextPageToken, files(id, name)")
                 .setQ(query);
 
-        List<String> result = new ArrayList<>();
+        List<File> resultList = new ArrayList<>();
 
         do {
             FileList files = request.execute();
 
-            for (File file : files.getFiles()) {
-                result.add(file.getName());
+            for (File curFiles : files.getFiles()) {
+                resultList.add(curFiles);
             }
 
             request.setPageToken(files.getNextPageToken());
         }
         while (request.getPageToken() != null && request.getPageToken().length() > 0);
 
-        return result;
+        HashSet<File> resultSet = new HashSet<>(resultList);
+
+        if (resultSet.size() != resultList.size()) {
+            throw MainActivity.msgHelper.getExceptionWithError("Duplicate files in folder " + folderFile.getName());
+        }
+
+        return resultSet;
     }
 
-    public Boolean uploadToDriveFile(DocumentFile localDirectory, String localFileName, String driveFolderName) throws Exception {
+    public HashSet<File> getNestedFolders(File folderFile) throws Exception {
+        String query = "'" + folderFile.getId() + "' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false";
 
+        Drive.Files.List request = drive.files().list()
+                .setPageSize(FILE_PAGE_SIZE)
+                .setFields("nextPageToken, files(id, name)")
+                .setQ(query);
+
+        List<File> resultList = new ArrayList<>();
+
+        do {
+            FileList nestedFolders = request.execute();
+
+            for (File curFolder : nestedFolders.getFiles()) {
+                resultList.add(curFolder);
+            }
+
+            request.setPageToken(nestedFolders.getNextPageToken());
+        }
+        while (request.getPageToken() != null && request.getPageToken().length() > 0);
+
+        HashSet<File> resultSet = new HashSet<>(resultList);
+
+        if (resultSet.size() != resultList.size()) {
+            throw MainActivity.msgHelper.getExceptionWithError("Duplicate folders in folder " + folderFile.getName());
+        }
+
+        HashSet<File> folderSet = new HashSet<>();
+
+        for (File folder : resultSet) {
+            folderSet.add(folder);
+            folderSet.addAll(getNestedFolders(folder));
+        }
+
+        return folderSet;
+    }
+
+    public Boolean uploadToDriveFile(DocumentFile file, File driveFolder) throws Exception {
         File metadata = new File()
-                .setParents(Arrays.asList(getIdByName(driveFolderName, DriveType.FOLDER)))
-                .setName(localFileName);
+                .setParents(Arrays.asList(driveFolder.getId()))
+                .setName(file.getName());
 
-        java.io.File localFile = LocalFileHelper.getFileInDirectoryByName(localDirectory, localFileName);
+        java.io.File localFile = LocalFileHelper.getFileFromDocumentFile(file);
 
         InputStreamContent mediaContent =
                 new InputStreamContent(null,
@@ -190,24 +230,18 @@ public class GoogleDriveHelper {
         return resFile != null;
     }
 
-    public Boolean deleteDriveFile(String driveFolderName, String fileName) throws Exception {
-        String folderId = getIdByName(driveFolderName, DriveType.FOLDER);
-        String fileId = getIdByNameInFolder(fileName, DriveType.ANY, folderId);
-
-        drive.files().delete(fileId).execute();
+    public Boolean deleteDriveFile(File file) throws Exception {
+        drive.files().delete(file.getId()).execute();
 
         return true;
     }
 
-    public Boolean downloadDriveFile(DocumentFile localFolder, String driveFolderName, String fileName) throws Exception {
+    public Boolean downloadDriveFile(DocumentFile localFolder, File file) throws Exception {
         try {
-            String folderId = getIdByName(driveFolderName, DriveType.FOLDER);
-            String fileId = getIdByNameInFolder(fileName, DriveType.ANY, folderId);
-
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            drive.files().get(fileId).executeMediaAndDownloadTo(outputStream);
+            drive.files().get(file.getId()).executeMediaAndDownloadTo(outputStream);
 
-            DocumentFile downloadedFile = localFolder.createFile(null, fileName);
+            DocumentFile downloadedFile = localFolder.createFile(null, file.getName());
 
             OutputStream fileOutputStream = appContext.getContentResolver().openOutputStream(downloadedFile.getUri());
 
@@ -216,7 +250,7 @@ public class GoogleDriveHelper {
             outputStream.close();
         }
         catch (Exception e) {
-            DocumentFile createdFile = localFolder.findFile(fileName);
+            DocumentFile createdFile = localFolder.findFile(file.getName());
 
             if (createdFile != null) {
                 createdFile.delete();
@@ -224,19 +258,17 @@ public class GoogleDriveHelper {
 
             throw e;
         }
-
         return true;
     }
 
+    public Boolean deleteLocalFile(DocumentFile folder, DocumentFile file) throws Exception {
+        DocumentFile fileToDelete = folder.findFile(file.getName());
 
-    public Boolean deleteLocalFile(DocumentFile folder, String fileName) throws Exception {
-        DocumentFile file = folder.findFile(fileName);
-
-        if (file == null) {
-            throw msgHelper.getExceptionWithError("File to delete " + fileName + " was not found");
+        if (fileToDelete == null) {
+            throw msgHelper.getExceptionWithError("File to delete " + file.getName() + " was not found");
         }
 
-        file.delete();
+        fileToDelete.delete();
 
         return true;
     }
@@ -244,56 +276,127 @@ public class GoogleDriveHelper {
     public Boolean testLocalAndDriveFolders(DocumentFile localFolder, String driveFolderName) throws Exception {
         FetchHelper helper = getFetcher(localFolder, driveFolderName);
 
-        return helper.getDriveFolderFileNamesSet().equals(helper.getLocalFolderFileNamesSet());
+        return helper.mapsAreEqual();
     }
 
     public FetchHelper getFetcher(DocumentFile localFolder, String driveFolderName) throws Exception {
-        List<String> driveFolderFileNames = getFolderFileNames(driveFolderName);
-        HashSet<String> driveFolderFileNamesSet = new HashSet<>(driveFolderFileNames);
+        File rootFolder = getFileByName(driveFolderName, DriveType.FOLDER);
 
-        if (driveFolderFileNamesSet.size() != driveFolderFileNames.size()) {
-            throw msgHelper.getExceptionWithError("Duplicate items in the drive folder " + driveFolderName);
+        HashSet<File> driveFolderSet = getNestedFolders(rootFolder);
+        driveFolderSet.add(rootFolder);
+
+        List<String> driveFolderNamesList = getDriveNamesFromFiles(new ArrayList<>(driveFolderSet));
+        HashSet<String> driveFolderNamesSet = new HashSet<>(driveFolderNamesList);
+
+        if (driveFolderNamesList.size() != driveFolderNamesSet.size()) {
+            throw msgHelper.getExceptionWithError("Duplicate folders on drive");
         }
 
-        List<String> localFolderFileNames = LocalFileHelper.getFolderFileNames(localFolder);
-        HashSet<String> localFolderFileNamesSet = new HashSet<>(localFolderFileNames);
+        HashMap<File, HashSet<File>> driveFoldersWithFiles = new HashMap<>();
 
-        if (localFolderFileNamesSet.size() != localFolderFileNames.size()) {
-            throw msgHelper.getExceptionWithError("Duplicate items in local folder " + localFolder.getName());
+        for (File folder : driveFolderSet) {
+            driveFoldersWithFiles.put(folder, getFolderFiles(folder));
         }
 
-        FetchHelper helper = new FetchHelper();
-        helper.setDriveFolderFileNamesSet(driveFolderFileNamesSet);
-        helper.setLocalFolderFileNamesSet(localFolderFileNamesSet);
+        System.out.println("ALL DRIVE FILES WITH FOLDERS");
+        System.out.println(driveFoldersWithFiles);
 
-        return helper;
+        System.out.println("ALL LOCAL FILES WITH FOLDERS");
+
+        HashSet<DocumentFile> localFolderSet = LocalFileHelper.getNestedFolders(localFolder);
+        localFolderSet.add(localFolder);
+
+        List<String> localFolderNamesList = LocalFileHelper.getLocalNamesFromFiles(new ArrayList<>(localFolderSet));
+        HashSet<String> localFolderNamesSet = new HashSet<>(localFolderNamesList);
+
+        if (localFolderNamesList.size() != localFolderNamesSet.size()) {
+            throw msgHelper.getExceptionWithError("Duplicate local folders");
+        }
+
+        if (!localFolderNamesSet.equals(driveFolderNamesSet)) {
+            throw msgHelper.getExceptionWithError("Drive and local folders are not equal");
+        }
+
+        HashMap<DocumentFile, HashSet<DocumentFile>> localFolderWithFiles = new HashMap<>();
+
+        for (DocumentFile folder : localFolderSet) {
+            localFolderWithFiles.put(folder, LocalFileHelper.getFolderFiles(folder));
+        }
+
+        for (DocumentFile folder : localFolderWithFiles.keySet()) {
+            System.out.println(folder.getName());
+            for (DocumentFile file : localFolderWithFiles.get(folder)) {
+                System.out.println(file.getName());
+            }
+        }
+
+        return new FetchHelper(driveFoldersWithFiles,
+                localFolderWithFiles,
+                driveFolderNamesSet,
+                localFolderNamesSet);
     }
 
     public FetchHelper getFetcher(Activity activity, DocumentFile localFolder, String driveFolderName) throws Exception {
         TextView currentFetchOperationTextView = activity.findViewById(R.id.currentFetchOperationTextView);
 
         activity.runOnUiThread(() -> currentFetchOperationTextView.setText("Getting drive files..."));
-        List<String> driveFolderFileNames = getFolderFileNames(driveFolderName);
-        HashSet<String> driveFolderFileNamesSet = new HashSet<>(driveFolderFileNames);
 
-        if (driveFolderFileNamesSet.size() != driveFolderFileNames.size()) {
-            throw msgHelper.getExceptionWithError("Duplicate items in the drive folder " + driveFolderName);
+        File rootFolder = getFileByName(driveFolderName, DriveType.FOLDER);
+
+        HashSet<File> driveFolderSet = getNestedFolders(rootFolder);
+        driveFolderSet.add(rootFolder);
+
+        List<String> driveFolderNamesList = getDriveNamesFromFiles(new ArrayList<>(driveFolderSet));
+        HashSet<String> driveFolderNamesSet = new HashSet<>(driveFolderNamesList);
+
+        if (driveFolderNamesList.size() != driveFolderNamesSet.size()) {
+            throw msgHelper.getExceptionWithError("Duplicate folders on drive");
         }
+
+        HashMap<File, HashSet<File>> driveFoldersWithFiles = new HashMap<>();
+
+        for (File folder : driveFolderSet) {
+            driveFoldersWithFiles.put(folder, getFolderFiles(folder));
+        }
+
+        System.out.println("ALL DRIVE FILES WITH FOLDERS");
+        System.out.println(driveFoldersWithFiles);
 
         activity.runOnUiThread(() -> currentFetchOperationTextView.setText("Getting local files..."));
 
-        List<String> localFolderFileNames = LocalFileHelper.getFolderFileNames(localFolder);
-        HashSet<String> localFolderFileNamesSet = new HashSet<>(localFolderFileNames);
+        System.out.println("ALL LOCAL FILES WITH FOLDERS");
 
-        if (localFolderFileNamesSet.size() != localFolderFileNames.size()) {
-            throw msgHelper.getExceptionWithError("Duplicate items in local folder " + localFolder.getName());
+        HashSet<DocumentFile> localFolderSet = LocalFileHelper.getNestedFolders(localFolder);
+        localFolderSet.add(localFolder);
+
+        List<String> localFolderNamesList = LocalFileHelper.getLocalNamesFromFiles(new ArrayList<>(localFolderSet));
+        HashSet<String> localFolderNamesSet = new HashSet<>(localFolderNamesList);
+
+        if (localFolderNamesList.size() != localFolderNamesSet.size()) {
+            throw msgHelper.getExceptionWithError("Duplicate local folders");
         }
 
-        FetchHelper helper = new FetchHelper();
-        helper.setDriveFolderFileNamesSet(driveFolderFileNamesSet);
-        helper.setLocalFolderFileNamesSet(localFolderFileNamesSet);
+        if (!localFolderNamesSet.equals(driveFolderNamesSet)) {
+            throw msgHelper.getExceptionWithError("Drive and local folders are not equal");
+        }
 
-        return helper;
+        HashMap<DocumentFile, HashSet<DocumentFile>> localFolderWithFiles = new HashMap<>();
+
+        for (DocumentFile folder : localFolderSet) {
+            localFolderWithFiles.put(folder, LocalFileHelper.getFolderFiles(folder));
+        }
+
+        for (DocumentFile folder : localFolderWithFiles.keySet()) {
+            System.out.println(folder.getName());
+            for (DocumentFile file : localFolderWithFiles.get(folder)) {
+                System.out.println(file.getName());
+            }
+        }
+
+        return new FetchHelper(driveFoldersWithFiles,
+                localFolderWithFiles,
+                driveFolderNamesSet,
+                localFolderNamesSet);
     }
 
     public Task<FetchHelper> fetchData(Activity activity, DocumentFile localFolder, String driveFolderName) {
@@ -307,7 +410,7 @@ public class GoogleDriveHelper {
         });
     }
 
-    public Task<Boolean> push(Activity activity, DocumentFile localFolder, String driveFolderName) {
+    public Task<Boolean> push(Activity activity, DocumentFile rootFolder, String driveFolderName) {
         return Tasks.call(executor, () -> {
 
             TextView currentOperationNameTextView = activity.findViewById(R.id.currentOperationNameTextView);
@@ -321,64 +424,76 @@ public class GoogleDriveHelper {
                 throw msgHelper.getExceptionWithError("Can't connect to network");
             }
 
-            HashSet<String> uploadToDriveFiles = ConfirmPushActivity.uploadToDriveFiles;
-            HashSet<String> deleteOnDriveFiles = ConfirmPushActivity.deleteOnDriveFiles;
+            HashMap<DocumentFile, HashSet<DocumentFile>> uploadToDriveFiles = ConfirmPushActivity.uploadToDriveFiles;
+            HashMap<File, HashSet<File>> deleteOnDriveFiles = ConfirmPushActivity.deleteOnDriveFiles;
 
-            final Integer totalSize = uploadToDriveFiles.size() + deleteOnDriveFiles.size();
+            final Integer totalSize = getMapSize(deleteOnDriveFiles) + LocalFileHelper.getMapSize(uploadToDriveFiles);
             Integer currentCompleted = 0;
 
             System.out.println("UPLOAD:");
             System.out.println(uploadToDriveFiles);
 
-            for (String name : uploadToDriveFiles) {
-                activity.runOnUiThread(() -> {
-                    currentOperationNameTextView.setText("Uploading to drive");
-                    currentOperationFileNameTextView.setText(name);
-                });
-
-
-                if (uploadToDriveFile(localFolder, name, driveFolderName)) {
-                    System.out.println(name + " : " + "OK");
-
-                    currentCompleted++;
-                    int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
-
+            for (DocumentFile folder : uploadToDriveFiles.keySet()) {
+                for (DocumentFile file : uploadToDriveFiles.get(folder)) {
                     activity.runOnUiThread(() -> {
-                        loadingProgressBar.setProgress(percent);
-                        loadingStatusTextView.setText("Loading " + percent + "%");
+                        currentOperationNameTextView.setText("Uploading to drive");
+                        currentOperationFileNameTextView.setText(file.getName());
                     });
-                }
-                else {
-                    System.out.println(name + " : FAIL");
+
+                    HashSet<File> driveSet = new HashSet<>(deleteOnDriveFiles.keySet());
+
+                    File driveFolder = SearchHelper.findDriveFileByName(driveSet, folder.getName());
+
+                    if (uploadToDriveFile(file, driveFolder)) {
+                        System.out.println(file.getName() + " : " + "OK");
+
+                        currentCompleted++;
+                        int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
+
+                        activity.runOnUiThread(() -> {
+                            loadingProgressBar.setProgress(percent);
+                            loadingStatusTextView.setText("Loading " + percent + "%");
+                        });
+                    }
+                    else {
+                        System.out.println(file.getName() + " : FAIL");
+                    }
                 }
             }
 
             System.out.println("DELETE:");
             System.out.println(deleteOnDriveFiles);
 
-            for (String name : deleteOnDriveFiles) {
-                activity.runOnUiThread(() -> {
-                    currentOperationNameTextView.setText("Deleting from drive");
-                    currentOperationFileNameTextView.setText(name);
-                });
-
-                if (deleteDriveFile(driveFolderName, name)) {
-                    System.out.println("DELETE: " + name + " OK");
-
-                    currentCompleted++;
-                    int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
-
+            for (File folder : deleteOnDriveFiles.keySet()) {
+                for (File file : deleteOnDriveFiles.get(folder)) {
                     activity.runOnUiThread(() -> {
-                        loadingProgressBar.setProgress(percent);
-                        loadingStatusTextView.setText("Loading " + percent + "%");
+                        currentOperationNameTextView.setText("Deleting from drive");
+                        currentOperationFileNameTextView.setText(file.getName());
                     });
-                }
-                else {
-                    System.out.println("DELETE: " + name + " FAIL");
+
+                    if (deleteDriveFile(file)) {
+                        System.out.println("DELETE: " + file.getName() + " OK");
+
+                        currentCompleted++;
+                        int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
+
+                        activity.runOnUiThread(() -> {
+                            loadingProgressBar.setProgress(percent);
+                            loadingStatusTextView.setText("Loading " + percent + "%");
+                        });
+                    }
+                    else {
+                        System.out.println("DELETE: " + file.getName() + " FAIL");
+                    }
                 }
             }
 
-            Boolean result = testLocalAndDriveFolders(localFolder, driveFolderName);
+            activity.runOnUiThread(() -> {
+                currentOperationNameTextView.setText("Comparing folders...");
+                currentOperationFileNameTextView.setText("");
+            });
+
+            Boolean result = testLocalAndDriveFolders(rootFolder, driveFolderName);
 
             activity.runOnUiThread(() -> {
                 if (result) {
@@ -399,7 +514,7 @@ public class GoogleDriveHelper {
         });
     }
 
-    public Task<Boolean> pull(Activity activity, DocumentFile localFolder, String driveFolderName) {
+    public Task<Boolean> pull(Activity activity, DocumentFile rootFolder, String driveFolderName) {
         return Tasks.call(executor, () -> {
 
             TextView currentOperationNameTextView = activity.findViewById(R.id.currentOperationNameTextView);
@@ -413,63 +528,81 @@ public class GoogleDriveHelper {
                 throw msgHelper.getExceptionWithError("Can't connect to network");
             }
 
-            HashSet<String> downloadFromDriveFiles = ConfirmPullActivity.downloadFromDriveFiles;
-            HashSet<String> deleteInLocalFiles = ConfirmPullActivity.deleteInLocalFiles;
+            HashMap<File, HashSet<File>> downloadFromDriveFiles = ConfirmPullActivity.downloadFromDriveFiles;
+            HashMap<DocumentFile, HashSet<DocumentFile>> deleteInLocalFiles = ConfirmPullActivity.deleteInLocalFiles;
 
-            final Integer totalSize = downloadFromDriveFiles.size() + deleteInLocalFiles.size();
+            final Integer totalSize = getMapSize(downloadFromDriveFiles) + LocalFileHelper.getMapSize(deleteInLocalFiles);
             Integer currentCompleted = 0;
 
             System.out.println("DOWNLOAD:");
             System.out.println(downloadFromDriveFiles);
 
-            for (String name : downloadFromDriveFiles) {
-                activity.runOnUiThread(() -> {
-                    currentOperationNameTextView.setText("Downloading from drive");
-                    currentOperationFileNameTextView.setText(name);
-                });
-
-                if (downloadDriveFile(localFolder, driveFolderName, name)) {
-                    System.out.println("DOWNLOAD: " + name + " OK");
-
-                    currentCompleted++;
-                    int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
-
+            for (File folder : downloadFromDriveFiles.keySet()) {
+                for (File file : downloadFromDriveFiles.get(folder)) {
+                    String name = file.getName();
                     activity.runOnUiThread(() -> {
-                        loadingProgressBar.setProgress(percent);
-                        loadingStatusTextView.setText("Loading " + percent + "%");
+                        currentOperationNameTextView.setText("Downloading from drive");
+                        currentOperationFileNameTextView.setText(name);
                     });
-                }
-                else {
-                    System.out.println("DOWNLOAD: " + name + " FAIL");
+
+                    HashSet<DocumentFile> localSet = new HashSet<>(deleteInLocalFiles.keySet());
+
+                    DocumentFile localFolder =
+                            SearchHelper.findLocalFileByName(localSet,
+                                    folder.getName());
+
+                    if (downloadDriveFile(localFolder, file)) {
+                        System.out.println("DOWNLOAD: " + name + " OK");
+
+                        currentCompleted++;
+                        int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
+
+                        activity.runOnUiThread(() -> {
+                            loadingProgressBar.setProgress(percent);
+                            loadingStatusTextView.setText("Loading " + percent + "%");
+                        });
+                    }
+                    else {
+                        System.out.println("DOWNLOAD: " + name + " FAIL");
+                    }
                 }
             }
 
             System.out.println("DELETE:");
             System.out.println(deleteInLocalFiles);
 
-            for (String name : deleteInLocalFiles) {
-                activity.runOnUiThread(() -> {
-                    currentOperationNameTextView.setText("Deleting in local storage");
-                    currentOperationFileNameTextView.setText(name);
-                });
-
-                if (deleteLocalFile(localFolder, name)) {
-                    System.out.println("DELETE: " + name + " OK");
-
-                    currentCompleted++;
-                    int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
+            for (DocumentFile folder : deleteInLocalFiles.keySet()) {
+                for (DocumentFile file : deleteInLocalFiles.get(folder)) {
+                    String name = file.getName();
 
                     activity.runOnUiThread(() -> {
-                        loadingProgressBar.setProgress(percent);
-                        loadingStatusTextView.setText("Loading " + percent + "%");
+                        currentOperationNameTextView.setText("Deleting in local storage");
+                        currentOperationFileNameTextView.setText(name);
                     });
-                }
-                else {
-                    System.out.println("DELETE: " + name + " FAIL");
+
+                    if (deleteLocalFile(folder, file)) {
+                        System.out.println("DELETE: " + name + " OK");
+
+                        currentCompleted++;
+                        int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
+
+                        activity.runOnUiThread(() -> {
+                            loadingProgressBar.setProgress(percent);
+                            loadingStatusTextView.setText("Loading " + percent + "%");
+                        });
+                    }
+                    else {
+                        System.out.println("DELETE: " + name + " FAIL");
+                    }
                 }
             }
 
-            Boolean result = testLocalAndDriveFolders(localFolder, driveFolderName);
+            activity.runOnUiThread(() -> {
+                currentOperationNameTextView.setText("Comparing folders...");
+                currentOperationFileNameTextView.setText("");
+            });
+
+            Boolean result = testLocalAndDriveFolders(rootFolder, driveFolderName);
 
             activity.runOnUiThread(() -> {
                 if (result) {

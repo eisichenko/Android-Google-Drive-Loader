@@ -12,6 +12,8 @@ import com.example.android_google_drive_loader.MainActivity;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 
@@ -24,23 +26,81 @@ public class LocalFileHelper {
         return result;
     }
 
-    public static List<String> getFolderFileNames(DocumentFile directory) throws Exception {
+    public static List<String> getLocalNamesFromFiles(List<DocumentFile> files) {
+        List<String> res = new ArrayList<>();
+
+        for (DocumentFile file : files) {
+            res.add(file.getName());
+        }
+
+        return res;
+    }
+
+    public static HashSet<String> getLocalNamesFromSet(HashSet<DocumentFile> files) {
+        HashSet<String> res = new HashSet<>();
+
+        for (DocumentFile file : files) {
+            res.add(file.getName());
+        }
+
+        return res;
+    }
+
+    public static int getMapSize(HashMap<DocumentFile, HashSet<DocumentFile>> localFiles) {
+        int res = 0;
+        for (HashSet<DocumentFile> set : localFiles.values()) {
+            res += set.size();
+        }
+        return res;
+    }
+
+    public static HashSet<DocumentFile> getNestedFolders(DocumentFile folder) throws Exception {
+        if (!folder.isDirectory()) {
+            throw MainActivity.msgHelper.getExceptionWithError("File is not directory");
+        }
+
+        DocumentFile[] files = folder.listFiles();
+
+        ArrayList<DocumentFile> res = new ArrayList<>();
+
+        for (DocumentFile file : files) {
+            if (file.isDirectory()) {
+                res.add(file);
+            }
+        }
+
+        HashSet<DocumentFile> resSet = new HashSet<>(res);
+
+        if (resSet.size() != res.size()) {
+            throw MainActivity.msgHelper.getExceptionWithError("Duplicate local folders in " + folder.getName());
+        }
+
+        HashSet<DocumentFile> folderSet = new HashSet<>();
+
+        for (DocumentFile curFolder : resSet) {
+            folderSet.add(curFolder);
+            folderSet.addAll(getNestedFolders(curFolder));
+        }
+
+        return folderSet;
+    }
+
+    public static HashSet<DocumentFile> getFolderFiles(DocumentFile directory) throws Exception {
         if (!directory.isDirectory()) {
             throw MainActivity.msgHelper.getExceptionWithError("File is not directory");
         }
 
         DocumentFile[] files = directory.listFiles();
 
-        List<String> res = new ArrayList<>();
+        List<DocumentFile> res = new ArrayList<>();
 
         for (DocumentFile file : files) {
-            if (file.isDirectory()) {
-                throw MainActivity.msgHelper.getExceptionWithError("Directory in files");
+            if (!file.isDirectory()) {
+                res.add(file);
             }
-            res.add(file.getName());
         }
 
-        return res;
+        return new HashSet<>(res);
     }
 
     public static File getFileInDirectoryByName(DocumentFile directory, String fileName) {

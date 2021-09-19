@@ -13,26 +13,33 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.android_google_drive_loader.Enums.DriveType;
 import com.example.android_google_drive_loader.Enums.OperationType;
 import com.example.android_google_drive_loader.Enums.Theme;
+import com.example.android_google_drive_loader.Helpers.GoogleDriveHelper;
+import com.example.android_google_drive_loader.Helpers.LocalFileHelper;
+import com.example.android_google_drive_loader.Helpers.SearchHelper;
 import com.example.android_google_drive_loader.Helpers.SetOperationsHelper;
+import com.google.api.services.drive.model.File;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class ConfirmPushActivity extends AppCompatActivity {
     private ArrayList<RecyclerViewItem> uploadFromDriveRecyclerViewItemList;
     private ArrayList<RecyclerViewItem> deleteOnDriveRecyclerViewItemList;
-    private RecyclerView uploadFromDriveRecyclerView;
+    private RecyclerView uploadToDriveRecyclerView;
     private RecyclerView deleteOnDriveRecyclerView;
 
-    public static HashSet<String> uploadToDriveFiles;
-    public static HashSet<String> deleteOnDriveFiles;
+    public static HashMap<DocumentFile, HashSet<DocumentFile>> uploadToDriveFiles;
+    public static HashMap<File, HashSet<File>> deleteOnDriveFiles;
 
     private TextView noneUploadDriveTextView;
     private TextView noneDeleteDriveTextView;
@@ -93,8 +100,8 @@ public class ConfirmPushActivity extends AppCompatActivity {
         setContentView(R.layout.activity_confirm_push);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        uploadFromDriveRecyclerView = findViewById(R.id.uploadFromDriveRecyclerView);
-        uploadFromDriveRecyclerView.setFocusable(false);
+        uploadToDriveRecyclerView = findViewById(R.id.uploadFromDriveRecyclerView);
+        uploadToDriveRecyclerView.setFocusable(false);
 
         deleteOnDriveRecyclerView = findViewById(R.id.deleteFromDriveRecyclerView);
         deleteOnDriveRecyclerView.setFocusable(false);
@@ -103,49 +110,87 @@ public class ConfirmPushActivity extends AppCompatActivity {
                 DividerItemDecoration.VERTICAL);
         decoration.setDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.list_divider));
 
-        uploadFromDriveRecyclerView.addItemDecoration(decoration);
+        uploadToDriveRecyclerView.addItemDecoration(decoration);
         deleteOnDriveRecyclerView.addItemDecoration(decoration);
 
-        HashSet<String> driveFolderFileNamesSet;
-        HashSet<String> localFolderFileNamesSet;
+        if (MainActivity.operationType == OperationType.PUSH) {
+            HashMap<File, HashSet<File>> driveFolderFiles;
+            HashMap<DocumentFile, HashSet<DocumentFile>> localFolderFiles;
 
-        if (MainActivity.fetchHelper == null) {
-            driveFolderFileNamesSet = new HashSet<>();
-            localFolderFileNamesSet = new HashSet<>();
+            uploadToDriveFiles = new HashMap<>();
+            deleteOnDriveFiles = new HashMap<>();
+
+            if (MainActivity.fetchHelper == null) {
+                driveFolderFiles = new HashMap<>();
+                localFolderFiles = new HashMap<>();
+            }
+            else {
+                driveFolderFiles = MainActivity.fetchHelper.getDriveFolderFiles();
+                localFolderFiles = MainActivity.fetchHelper.getLocalFolderFiles();
+            }
+
+            for (File driveFolder : driveFolderFiles.keySet()) {
+                try {
+                    DocumentFile localFolder = SearchHelper.findLocalFileByName(localFolderFiles, driveFolder.getName());
+
+                    HashSet<String> localSet = LocalFileHelper.getLocalNamesFromSet(localFolderFiles.get(localFolder));
+                    HashSet<String> driveSet = GoogleDriveHelper.getDriveNamesFromSet(driveFolderFiles.get(driveFolder));
+
+                    HashSet<String> uploadRes = SetOperationsHelper.
+                            relativeComplement(localSet, driveSet);
+
+                    HashSet<String> deleteRes = SetOperationsHelper.
+                            relativeComplement(driveSet, localSet);
+
+                    uploadToDriveFiles.put(localFolder, SearchHelper.strSetToDocumentFile(
+                            localFolderFiles.get(localFolder),
+                            uploadRes));
+
+                    deleteOnDriveFiles.put(driveFolder, SearchHelper.strSetToFile(
+                            driveFolderFiles.get(driveFolder),
+                            deleteRes));
+
+                } catch (Exception e) {
+                    MainActivity.msgHelper.showToast(e.getMessage());
+                }
+            }
+
+            uploadFromDriveRecyclerViewItemList = new ArrayList<>();
+            deleteOnDriveRecyclerViewItemList = new ArrayList<>();
+
+            if (GoogleDriveHelper.getMapSize(deleteOnDriveFiles) == 0) {
+                noneDeleteDriveTextView = findViewById(R.id.noneDeleteDriveTextView);
+                noneDeleteDriveTextView.setVisibility(View.VISIBLE);
+            }
+
+            if (LocalFileHelper.getMapSize(uploadToDriveFiles) == 0) {
+                noneUploadDriveTextView = findViewById(R.id.noneUploadDriveTextView);
+                noneUploadDriveTextView.setVisibility(View.VISIBLE);
+            }
+
+            for (DocumentFile folder : uploadToDriveFiles.keySet()) {
+                if (uploadToDriveFiles.get(folder).size() == 0) {
+                    continue;
+                }
+                uploadFromDriveRecyclerViewItemList.add(new RecyclerViewItem("FOLDER: " + folder.getName(), DriveType.FOLDER));
+                for (DocumentFile file : uploadToDriveFiles.get(folder)) {
+                    System.out.println("DELETE: " + file.getName());
+                    uploadFromDriveRecyclerViewItemList.add(new RecyclerViewItem(file.getName()));
+                }
+            }
+
+            for (File folder : deleteOnDriveFiles.keySet()) {
+                if (deleteOnDriveFiles.get(folder).size() == 0) {
+                    continue;
+                }
+                deleteOnDriveRecyclerViewItemList.add(new RecyclerViewItem("FOLDER: " + folder.getName(), DriveType.FOLDER));
+                for (File file : deleteOnDriveFiles.get(folder)) {
+                    deleteOnDriveRecyclerViewItemList.add(new RecyclerViewItem(file.getName()));
+                }
+            }
+
+            setAdapter();
         }
-        else {
-            driveFolderFileNamesSet = MainActivity.fetchHelper.getDriveFolderFileNamesSet();
-            localFolderFileNamesSet = MainActivity.fetchHelper.getLocalFolderFileNamesSet();
-        }
-
-        uploadToDriveFiles = SetOperationsHelper.
-                relativeComplement(localFolderFileNamesSet, driveFolderFileNamesSet);
-
-        deleteOnDriveFiles = SetOperationsHelper.
-                relativeComplement(driveFolderFileNamesSet, localFolderFileNamesSet);
-
-        uploadFromDriveRecyclerViewItemList = new ArrayList<>();
-        deleteOnDriveRecyclerViewItemList = new ArrayList<>();
-
-        if (uploadToDriveFiles.size() == 0) {
-            noneUploadDriveTextView = findViewById(R.id.noneUploadDriveTextView);
-            noneUploadDriveTextView.setVisibility(View.VISIBLE);
-        }
-
-        if (deleteOnDriveFiles.size() == 0) {
-            noneDeleteDriveTextView = findViewById(R.id.noneDeleteDriveTextView);
-            noneDeleteDriveTextView.setVisibility(View.VISIBLE);
-        }
-
-        for (String name : uploadToDriveFiles) {
-            uploadFromDriveRecyclerViewItemList.add(new RecyclerViewItem(name));
-        }
-
-        for (String name : deleteOnDriveFiles) {
-            deleteOnDriveRecyclerViewItemList.add(new RecyclerViewItem(name));
-        }
-
-        setAdapter();
 
         startPushButton = findViewById(R.id.startPushButton);
         startPushButton.setOnClickListener(view -> {
@@ -162,9 +207,9 @@ public class ConfirmPushActivity extends AppCompatActivity {
         RecyclerViewAdapter deleteOnDriveAdapter = new RecyclerViewAdapter(deleteOnDriveRecyclerViewItemList);
         RecyclerView.LayoutManager deleteOnDriveLayoutManager = new LinearLayoutManager(getApplicationContext());
 
-        uploadFromDriveRecyclerView.setLayoutManager(uploadFromDriveLayoutManager);
-        uploadFromDriveRecyclerView.setItemAnimator(new DefaultItemAnimator());
-        uploadFromDriveRecyclerView.setAdapter(uploadFromDriveAdapter);
+        uploadToDriveRecyclerView.setLayoutManager(uploadFromDriveLayoutManager);
+        uploadToDriveRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        uploadToDriveRecyclerView.setAdapter(uploadFromDriveAdapter);
 
         deleteOnDriveRecyclerView.setLayoutManager(deleteOnDriveLayoutManager);
         deleteOnDriveRecyclerView.setItemAnimator(new DefaultItemAnimator());
