@@ -1,6 +1,10 @@
 package com.example.android_google_drive_loader.Helpers;
 
+import com.google.api.services.drive.model.File;
+
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 public class FetchHelper {
 

@@ -49,16 +49,16 @@ public class FinishJobActivity extends AppCompatActivity {
                 MainActivity.driveHelper.push(this, MainActivity.pickedDir, MainActivity.driveFolderName)
                         .addOnSuccessListener(isTestPassed -> {
                             if (isTestPassed) {
-                                MainActivity.driveHelper.showToast("SUCCESS");
+                                MainActivity.msgHelper.showToast("SUCCESS");
                             }
                             else {
-                                MainActivity.driveHelper.showToast("FAIL (folders are not equal)");
+                                MainActivity.msgHelper.showToast("FAIL (folders are not equal)");
                             }
 
                             MainActivity.stopwatchState = StopwatchState.STOPPED;
                         })
                         .addOnFailureListener(e -> {
-                            MainActivity.driveHelper.showToast(e.getMessage());
+                            MainActivity.msgHelper.showToast(e.getMessage());
                             System.out.println(e.getMessage());
                             e.printStackTrace();
 
@@ -70,16 +70,16 @@ public class FinishJobActivity extends AppCompatActivity {
                 MainActivity.driveHelper.pull(this, MainActivity.pickedDir, MainActivity.driveFolderName)
                         .addOnSuccessListener(isTestPassed -> {
                             if (isTestPassed) {
-                                MainActivity.driveHelper.showToast("SUCCESS");
+                                MainActivity.msgHelper.showToast("SUCCESS");
                             }
                             else {
-                                MainActivity.driveHelper.showToast("FAIL (folders are not equal)");
+                                MainActivity.msgHelper.showToast("FAIL (folders are not equal)");
                             }
 
                             MainActivity.stopwatchState = StopwatchState.STOPPED;
                         })
                         .addOnFailureListener(e -> {
-                            MainActivity.driveHelper.showToast(e.getMessage());
+                            MainActivity.msgHelper.showToast(e.getMessage());
                             System.out.println(e.getMessage());
                             e.printStackTrace();
 
@@ -88,7 +88,7 @@ public class FinishJobActivity extends AppCompatActivity {
                         });
             }
             else {
-                MainActivity.driveHelper.showToast("ERROR: Unknown operation");
+                MainActivity.msgHelper.showToast("ERROR: Unknown operation");
                 MainActivity.stopwatchState = StopwatchState.STOPPED;
                 backButton.setVisibility(View.VISIBLE);
             }

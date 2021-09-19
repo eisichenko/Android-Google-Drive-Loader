@@ -1,5 +1,8 @@
 package com.example.android_google_drive_loader.Helpers;
 
+import static com.example.android_google_drive_loader.MainActivity.fetchHelper;
+import static com.example.android_google_drive_loader.MainActivity.msgHelper;
+
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
@@ -51,19 +54,22 @@ public class GoogleDriveHelper {
     public static String SCOPE = DriveScopes.DRIVE;
     private final int FILE_PAGE_SIZE = 100;
 
-    public void showToast(String msg) {
-        Toast.makeText(appContext, msg, Toast.LENGTH_SHORT).show();
-    }
-
-    public Exception getExceptionWithError(String msg) {
-        return new Exception("ERROR: " + msg);
-    }
-
     private boolean isNetworkAvailable() {
         ConnectivityManager connectivityManager
                 = (ConnectivityManager) appContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
+    }
+
+    public List<File> filterByName(List<File> list, String name) {
+        System.out.println(list);
+        List<File> res = new ArrayList<>();
+        for(File file : list) {
+            if (name.equals(file.getName())) {
+                res.add(file);
+            }
+        }
+        return res;
     }
 
     public GoogleDriveHelper(Context appContext, GoogleSignInAccount account, String appName) {
@@ -73,15 +79,13 @@ public class GoogleDriveHelper {
 
         credential.setSelectedAccount(account.getAccount());
 
-        com.google.api.services.drive.Drive googleDriveService =
-                new com.google.api.services.drive.Drive.Builder(
-                        AndroidHttp.newCompatibleTransport(),
-                        new GsonFactory(),
-                        credential)
-                        .setApplicationName(appName)
-                        .build();
+        this.drive = new Drive.Builder(
+                AndroidHttp.newCompatibleTransport(),
+                new GsonFactory(),
+                credential)
+                .setApplicationName(appName)
+                .build();
 
-        this.drive = googleDriveService;
         this.appContext = appContext;
         this.executor = Executors.newSingleThreadExecutor();
     }
@@ -97,17 +101,17 @@ public class GoogleDriveHelper {
         }
 
         FileList result = drive.files().list()
-                .setFields("files(id)")
+                .setFields("files(id, name)")
                 .setQ(query).execute();
 
-        List<File> files = result.getFiles();
+        List<File> files = filterByName(result.getFiles(), name);
 
         if (files.size() > 1) {
-            throw getExceptionWithError("Duplicate folders");
+            throw msgHelper.getExceptionWithError("Duplicate folders " + name);
         }
 
         if (files.size() == 0) {
-            throw getExceptionWithError("Folder on the drive was not found");
+            throw msgHelper.getExceptionWithError("Folder " + name + " on the drive was not found");
         }
 
         return files.get(0).getId();
@@ -124,17 +128,17 @@ public class GoogleDriveHelper {
         }
 
         FileList result = drive.files().list()
-                .setFields("files(id)")
+                .setFields("files(id, name)")
                 .setQ(query).execute();
 
-        List<File> files = result.getFiles();
+        List<File> files = filterByName(result.getFiles(), name);
 
         if (files.size() > 1) {
-            throw getExceptionWithError("Duplicate folders");
+            throw msgHelper.getExceptionWithError("Duplicate folders " + name);
         }
 
         if (files.size() == 0) {
-            throw getExceptionWithError("Folder on the drive was not found");
+            throw msgHelper.getExceptionWithError("Folder " + name + " on the drive was not found");
         }
 
         return files.get(0).getId();
@@ -229,7 +233,7 @@ public class GoogleDriveHelper {
         DocumentFile file = folder.findFile(fileName);
 
         if (file == null) {
-            throw getExceptionWithError("File to delete was not found");
+            throw msgHelper.getExceptionWithError("File to delete " + fileName + " was not found");
         }
 
         file.delete();
@@ -248,14 +252,14 @@ public class GoogleDriveHelper {
         HashSet<String> driveFolderFileNamesSet = new HashSet<>(driveFolderFileNames);
 
         if (driveFolderFileNamesSet.size() != driveFolderFileNames.size()) {
-            throw getExceptionWithError("Duplicate items in the drive folder");
+            throw msgHelper.getExceptionWithError("Duplicate items in the drive folder " + driveFolderName);
         }
 
         List<String> localFolderFileNames = LocalFileHelper.getFolderFileNames(localFolder);
         HashSet<String> localFolderFileNamesSet = new HashSet<>(localFolderFileNames);
 
         if (localFolderFileNamesSet.size() != localFolderFileNames.size()) {
-            throw getExceptionWithError("Duplicate items in local folder");
+            throw msgHelper.getExceptionWithError("Duplicate items in local folder " + localFolder.getName());
         }
 
         FetchHelper helper = new FetchHelper();
@@ -273,7 +277,7 @@ public class GoogleDriveHelper {
         HashSet<String> driveFolderFileNamesSet = new HashSet<>(driveFolderFileNames);
 
         if (driveFolderFileNamesSet.size() != driveFolderFileNames.size()) {
-            throw getExceptionWithError("Duplicate items in the drive folder");
+            throw msgHelper.getExceptionWithError("Duplicate items in the drive folder " + driveFolderName);
         }
 
         activity.runOnUiThread(() -> currentFetchOperationTextView.setText("Getting local files..."));
@@ -282,7 +286,7 @@ public class GoogleDriveHelper {
         HashSet<String> localFolderFileNamesSet = new HashSet<>(localFolderFileNames);
 
         if (localFolderFileNamesSet.size() != localFolderFileNames.size()) {
-            throw getExceptionWithError("Duplicate items in local folder");
+            throw msgHelper.getExceptionWithError("Duplicate items in local folder " + localFolder.getName());
         }
 
         FetchHelper helper = new FetchHelper();
@@ -296,7 +300,7 @@ public class GoogleDriveHelper {
         return Tasks.call(executor, () -> {
 
             if (!isNetworkAvailable()) {
-                throw getExceptionWithError("Can't connect to network");
+                throw msgHelper.getExceptionWithError("Can't connect to network");
             }
 
             return getFetcher(activity, localFolder, driveFolderName);
@@ -314,7 +318,7 @@ public class GoogleDriveHelper {
             TextView warningTextView = activity.findViewById(R.id.warningTextView);
 
             if (!isNetworkAvailable()) {
-                throw getExceptionWithError("Can't connect to network");
+                throw msgHelper.getExceptionWithError("Can't connect to network");
             }
 
             HashSet<String> uploadToDriveFiles = ConfirmPushActivity.uploadToDriveFiles;
@@ -406,7 +410,7 @@ public class GoogleDriveHelper {
             TextView warningTextView = activity.findViewById(R.id.warningTextView);
 
             if (!isNetworkAvailable()) {
-                throw getExceptionWithError("Can't connect to network");
+                throw msgHelper.getExceptionWithError("Can't connect to network");
             }
 
             HashSet<String> downloadFromDriveFiles = ConfirmPullActivity.downloadFromDriveFiles;

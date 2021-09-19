@@ -37,6 +37,7 @@ import com.example.android_google_drive_loader.Helpers.GoogleDriveHelper;
 import com.example.android_google_drive_loader.Helpers.LocalFileHelper;
 import com.example.android_google_drive_loader.Enums.OperationType;
 import com.example.android_google_drive_loader.Enums.StopwatchState;
+import com.example.android_google_drive_loader.Helpers.MessageHelper;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -46,11 +47,11 @@ import com.google.android.gms.common.api.Scope;
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_CODE_SIGN_IN = 1;
-    private static final int REQUEST_CODE_PERMISSION = 2;
-    private static final int REQUEST_CODE_CHECK_SETTINGS = 3;
-    private static final int REQUEST_CODE_CHOOSE_FOLDER = 4;
+    private static final int REQUEST_CODE_CHECK_SETTINGS = 2;
+    private static final int REQUEST_CODE_CHOOSE_FOLDER = 3;
 
     public static GoogleDriveHelper driveHelper;
+    public static MessageHelper msgHelper;
     public static DocumentFile pickedDir;
     public static String driveFolderName;
     public static FetchHelper fetchHelper;
@@ -116,6 +117,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        msgHelper = new MessageHelper(getApplicationContext());
+
         settings = getSharedPreferences(APP_PREFERENCES_NAME, Context.MODE_PRIVATE);
 
         String themeString = settings.getString(THEME_CACHE_NAME, null);
@@ -156,10 +159,10 @@ public class MainActivity extends AppCompatActivity {
                 driveFolderName = driveFolderNameEditText.getText().toString();
 
                 if (driveFolderName.length() == 0) {
-                    throw driveHelper.getExceptionWithError("Empty drive folder name");
+                    throw msgHelper.getExceptionWithError("Empty drive folder name");
                 }
                 else if (pickedDir == null) {
-                    throw driveHelper.getExceptionWithError("Local folder was not picked");
+                    throw msgHelper.getExceptionWithError("Local folder was not picked");
                 }
 
                 settings.edit().putString(DRIVE_DIRECTORY_URI_CACHE_NAME, driveFolderName).apply();
@@ -173,13 +176,13 @@ public class MainActivity extends AppCompatActivity {
                         startActivity(intent);
                     }
                     else {
-                        driveHelper.showToast("Everything is up-to-date");
+                        msgHelper.showToast("Everything is up-to-date");
                     }
 
                     progressBar.setVisibility(View.INVISIBLE);
                     loadingTextView.setVisibility(View.INVISIBLE);
                 }).addOnFailureListener(e -> {
-                    driveHelper.showToast(e.getMessage());
+                    msgHelper.showToast(e.getMessage());
                     System.out.println(e.getMessage());
                     e.printStackTrace();
 
@@ -212,10 +215,10 @@ public class MainActivity extends AppCompatActivity {
                 driveFolderName = driveFolderNameEditText.getText().toString();
 
                 if (driveFolderName.length() == 0) {
-                    throw driveHelper.getExceptionWithError("Empty drive folder name");
+                    throw msgHelper.getExceptionWithError("Empty drive folder name");
                 }
                 else if (pickedDir == null) {
-                    throw driveHelper.getExceptionWithError("Local folder was not picked");
+                    throw msgHelper.getExceptionWithError("Local folder was not picked");
                 }
 
                 settings.edit().putString(DRIVE_DIRECTORY_URI_CACHE_NAME, driveFolderName).apply();
@@ -229,13 +232,13 @@ public class MainActivity extends AppCompatActivity {
                         startActivity(intent);
                     }
                     else {
-                        driveHelper.showToast("Everything is up-to-date");
+                        msgHelper.showToast("Everything is up-to-date");
                     }
 
                     progressBar.setVisibility(View.INVISIBLE);
                     loadingTextView.setVisibility(View.INVISIBLE);
                 }).addOnFailureListener(e -> {
-                    driveHelper.showToast(e.getMessage());
+                    msgHelper.showToast(e.getMessage());
                     System.out.println(e.getMessage());
                     e.printStackTrace();
 
@@ -270,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
                 ActivityCompat.requestPermissions(this,
                         new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE,
                                 Manifest.permission.READ_EXTERNAL_STORAGE},
-                        REQUEST_CODE_PERMISSION);
+                        REQUEST_CODE_CHECK_SETTINGS);
             }
             else {
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
@@ -364,16 +367,20 @@ public class MainActivity extends AppCompatActivity {
                     handleSignInResult(resultData);
                     break;
                 case REQUEST_CODE_CHECK_SETTINGS:
+                    System.out.println("FUCK YOU AND YOUR MOM");
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                         if (Environment.isExternalStorageManager()) {
-                            driveHelper.showToast("Access was given successfully");
+                            msgHelper.showToast("Access was given successfully");
+                            chooseButton.callOnClick();
                         }
                         else {
-                            driveHelper.showToast("App won't work without access");
+                            msgHelper.showToast("App won't work without access");
+                            return;
                         }
                     }
                     else {
-                        driveHelper.showToast("Access was given successfully");
+                        msgHelper.showToast("Access was given successfully");
+                        chooseButton.callOnClick();
                     }
                     break;
                 case REQUEST_CODE_CHOOSE_FOLDER:
@@ -389,16 +396,31 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, resultData);
     }
 
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == REQUEST_CODE_CHECK_SETTINGS) {
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                msgHelper.showToast("Access was given successfully");
+                chooseButton.callOnClick();
+            } else {
+                msgHelper.showToast("App won't work without access");
+            }
+            return;
+        }
+
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
     private void handleSignInResult(Intent result) {
         GoogleSignIn.getSignedInAccountFromIntent(result)
                 .addOnSuccessListener(account -> {
                     driveHelper = new GoogleDriveHelper(getApplicationContext(), account, getResources().getString(R.string.app_name));
-                    driveHelper.showToast("Sign up was successful");
+                    msgHelper.showToast("Sign up was successful");
                 })
                 .addOnFailureListener(e -> {
                     e.printStackTrace();
                     System.out.println(e.getMessage());
-                    driveHelper.showToast("ERROR: Sign up was not finished");
+                    msgHelper.showToast("ERROR: Sign up was not finished");
                 });
     }
 }

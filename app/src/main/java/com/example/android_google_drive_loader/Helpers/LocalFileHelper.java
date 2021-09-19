@@ -26,7 +26,7 @@ public class LocalFileHelper {
 
     public static List<String> getFolderFileNames(DocumentFile directory) throws Exception {
         if (!directory.isDirectory()) {
-            throw MainActivity.driveHelper.getExceptionWithError("File is not directory");
+            throw MainActivity.msgHelper.getExceptionWithError("File is not directory");
         }
 
         DocumentFile[] files = directory.listFiles();
@@ -35,7 +35,7 @@ public class LocalFileHelper {
 
         for (DocumentFile file : files) {
             if (file.isDirectory()) {
-                throw MainActivity.driveHelper.getExceptionWithError("Directory in files");
+                throw MainActivity.msgHelper.getExceptionWithError("Directory in files");
             }
             res.add(file.getName());
         }
