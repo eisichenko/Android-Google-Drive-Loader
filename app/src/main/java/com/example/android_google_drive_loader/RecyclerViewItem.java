@@ -1,7 +1,5 @@
 package com.example.android_google_drive_loader;
 
-import android.graphics.Color;
-
 import com.example.android_google_drive_loader.Enums.DriveType;
 
 public class RecyclerViewItem {

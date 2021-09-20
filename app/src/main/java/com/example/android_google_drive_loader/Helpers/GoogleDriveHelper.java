@@ -2,6 +2,7 @@ package com.example.android_google_drive_loader.Helpers;
 
 import static com.example.android_google_drive_loader.MainActivity.msgHelper;
 
+import android.accounts.AbstractAccountAuthenticator;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
@@ -17,6 +18,9 @@ import androidx.documentfile.provider.DocumentFile;
 import com.example.android_google_drive_loader.ConfirmPullActivity;
 import com.example.android_google_drive_loader.ConfirmPushActivity;
 import com.example.android_google_drive_loader.Enums.DriveType;
+import com.example.android_google_drive_loader.Files.AbstractFile;
+import com.example.android_google_drive_loader.Files.DriveFile;
+import com.example.android_google_drive_loader.Files.LocalFile;
 import com.example.android_google_drive_loader.MainActivity;
 import com.example.android_google_drive_loader.R;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -71,34 +75,6 @@ public class GoogleDriveHelper {
         return res;
     }
 
-    public static List<String> getDriveNamesFromFiles(List<File> files) {
-        List<String> res = new ArrayList<>();
-
-        for (File file : files) {
-            res.add(file.getName());
-        }
-
-        return res;
-    }
-
-    public static HashSet<String> getDriveNamesFromSet(HashSet<File> files) {
-        HashSet<String> res = new HashSet<>();
-
-        for (File file : files) {
-            res.add(file.getName());
-        }
-
-        return res;
-    }
-
-    public static int getMapSize(HashMap<File, HashSet<File>> driveFiles) {
-        int res = 0;
-        for (HashSet<File> set : driveFiles.values()) {
-            res += set.size();
-        }
-        return res;
-    }
-
     public GoogleDriveHelper(Context appContext, GoogleSignInAccount account, String appName) {
         GoogleAccountCredential credential =
                 GoogleAccountCredential.usingOAuth2(
@@ -144,7 +120,7 @@ public class GoogleDriveHelper {
         return files.get(0);
     }
 
-    public HashSet<File> getFolderFiles(File folderFile) throws Exception {
+    public HashSet<AbstractFile> getFolderFiles(DriveFile folderFile) throws Exception {
         String query = "'" + folderFile.getId() + "' in parents and mimeType != 'application/vnd.google-apps.folder' and trashed = false";
 
         Drive.Files.List request = drive.files().list()
@@ -152,29 +128,27 @@ public class GoogleDriveHelper {
                 .setFields("nextPageToken, files(id, name)")
                 .setQ(query);
 
-        List<File> resultList = new ArrayList<>();
+        HashSet<AbstractFile> res = new HashSet<>();
 
         do {
             FileList files = request.execute();
 
-            for (File curFiles : files.getFiles()) {
-                resultList.add(curFiles);
+            for (File curFile : files.getFiles()) {
+                DriveFile driveFile = new DriveFile(curFile);
+                if (res.contains(driveFile)) {
+                    throw MainActivity.msgHelper.getExceptionWithError("Duplicate files in folder " + folderFile.getName());
+                }
+                res.add(driveFile);
             }
 
             request.setPageToken(files.getNextPageToken());
         }
         while (request.getPageToken() != null && request.getPageToken().length() > 0);
 
-        HashSet<File> resultSet = new HashSet<>(resultList);
-
-        if (resultSet.size() != resultList.size()) {
-            throw MainActivity.msgHelper.getExceptionWithError("Duplicate files in folder " + folderFile.getName());
-        }
-
-        return resultSet;
+        return res;
     }
 
-    public HashSet<File> getNestedFolders(File folderFile) throws Exception {
+    public HashSet<AbstractFile> getNestedFolders(File folderFile) throws Exception {
         String query = "'" + folderFile.getId() + "' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false";
 
         Drive.Files.List request = drive.files().list()
@@ -182,41 +156,44 @@ public class GoogleDriveHelper {
                 .setFields("nextPageToken, files(id, name)")
                 .setQ(query);
 
-        List<File> resultList = new ArrayList<>();
+        HashSet<File> resultSet = new HashSet<>();
 
         do {
             FileList nestedFolders = request.execute();
 
             for (File curFolder : nestedFolders.getFiles()) {
-                resultList.add(curFolder);
+                if (resultSet.contains(curFolder)) {
+                    throw MainActivity.msgHelper.getExceptionWithError("Duplicate folders in folder " + folderFile.getName());
+                }
+                resultSet.add(curFolder);
             }
 
             request.setPageToken(nestedFolders.getNextPageToken());
         }
         while (request.getPageToken() != null && request.getPageToken().length() > 0);
 
-        HashSet<File> resultSet = new HashSet<>(resultList);
-
-        if (resultSet.size() != resultList.size()) {
-            throw MainActivity.msgHelper.getExceptionWithError("Duplicate folders in folder " + folderFile.getName());
-        }
-
-        HashSet<File> folderSet = new HashSet<>();
+        HashSet<AbstractFile> folderSet = new HashSet<>();
 
         for (File folder : resultSet) {
-            folderSet.add(folder);
+            DriveFile driveFile = new DriveFile(folder);
+            if (folderSet.contains(driveFile)) {
+                throw MainActivity.msgHelper.getExceptionWithError("Duplicate folders in folder " + folderFile.getName());
+            }
+            folderSet.add(driveFile);
             folderSet.addAll(getNestedFolders(folder));
         }
 
         return folderSet;
     }
 
-    public Boolean uploadToDriveFile(DocumentFile file, File driveFolder) throws Exception {
+    public Boolean uploadToDriveFile(LocalFile file, DriveFile driveFolder) throws Exception {
+        DocumentFile localDocumentFile = file.getFile();
+
         File metadata = new File()
                 .setParents(Arrays.asList(driveFolder.getId()))
                 .setName(file.getName());
 
-        java.io.File localFile = LocalFileHelper.getFileFromDocumentFile(file);
+        java.io.File localFile = LocalFileHelper.getFileFromDocumentFile(localDocumentFile);
 
         InputStreamContent mediaContent =
                 new InputStreamContent(null,
@@ -230,18 +207,21 @@ public class GoogleDriveHelper {
         return resFile != null;
     }
 
-    public Boolean deleteDriveFile(File file) throws Exception {
+    public Boolean deleteDriveFile(DriveFile file) throws Exception {
         drive.files().delete(file.getId()).execute();
 
         return true;
     }
 
-    public Boolean downloadDriveFile(DocumentFile localFolder, File file) throws Exception {
-        try {
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            drive.files().get(file.getId()).executeMediaAndDownloadTo(outputStream);
+    public Boolean downloadDriveFile(LocalFile localFolder, DriveFile driveFile) throws Exception {
+        DocumentFile folderDocumentFile = localFolder.getFile();
 
-            DocumentFile downloadedFile = localFolder.createFile(null, file.getName());
+        try {
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            drive.files().get(driveFile.getId()).executeMediaAndDownloadTo(outputStream);
+
+            DocumentFile downloadedFile = folderDocumentFile.createFile(null, driveFile.getName());
 
             OutputStream fileOutputStream = appContext.getContentResolver().openOutputStream(downloadedFile.getUri());
 
@@ -250,7 +230,7 @@ public class GoogleDriveHelper {
             outputStream.close();
         }
         catch (Exception e) {
-            DocumentFile createdFile = localFolder.findFile(file.getName());
+            DocumentFile createdFile = folderDocumentFile.findFile(driveFile.getName());
 
             if (createdFile != null) {
                 createdFile.delete();
@@ -261,8 +241,10 @@ public class GoogleDriveHelper {
         return true;
     }
 
-    public Boolean deleteLocalFile(DocumentFile folder, DocumentFile file) throws Exception {
-        DocumentFile fileToDelete = folder.findFile(file.getName());
+    public Boolean deleteLocalFile(LocalFile localFolder,  LocalFile file) throws Exception {
+        DocumentFile folderDocumentFile = localFolder.getFile();
+
+        DocumentFile fileToDelete = folderDocumentFile.findFile(file.getName());
 
         if (fileToDelete == null) {
             throw msgHelper.getExceptionWithError("File to delete " + file.getName() + " was not found");
@@ -282,58 +264,29 @@ public class GoogleDriveHelper {
     public FetchHelper getFetcher(DocumentFile localFolder, String driveFolderName) throws Exception {
         File rootFolder = getFileByName(driveFolderName, DriveType.FOLDER);
 
-        HashSet<File> driveFolderSet = getNestedFolders(rootFolder);
-        driveFolderSet.add(rootFolder);
+        HashSet<AbstractFile> driveFolderSet = getNestedFolders(rootFolder);
+        driveFolderSet.add(new DriveFile(rootFolder));
 
-        List<String> driveFolderNamesList = getDriveNamesFromFiles(new ArrayList<>(driveFolderSet));
-        HashSet<String> driveFolderNamesSet = new HashSet<>(driveFolderNamesList);
+        HashMap<AbstractFile, HashSet<AbstractFile>> driveFoldersWithFiles = new HashMap<>();
 
-        if (driveFolderNamesList.size() != driveFolderNamesSet.size()) {
-            throw msgHelper.getExceptionWithError("Duplicate folders on drive");
+        for (AbstractFile folder : driveFolderSet) {
+            driveFoldersWithFiles.put(folder, getFolderFiles((DriveFile) folder));
         }
 
-        HashMap<File, HashSet<File>> driveFoldersWithFiles = new HashMap<>();
+        HashSet<AbstractFile> localFolderSet = LocalFileHelper.getNestedFolders(localFolder);
+        localFolderSet.add(new LocalFile(localFolder));
 
-        for (File folder : driveFolderSet) {
-            driveFoldersWithFiles.put(folder, getFolderFiles(folder));
-        }
-
-        System.out.println("ALL DRIVE FILES WITH FOLDERS");
-        System.out.println(driveFoldersWithFiles);
-
-        System.out.println("ALL LOCAL FILES WITH FOLDERS");
-
-        HashSet<DocumentFile> localFolderSet = LocalFileHelper.getNestedFolders(localFolder);
-        localFolderSet.add(localFolder);
-
-        List<String> localFolderNamesList = LocalFileHelper.getLocalNamesFromFiles(new ArrayList<>(localFolderSet));
-        HashSet<String> localFolderNamesSet = new HashSet<>(localFolderNamesList);
-
-        if (localFolderNamesList.size() != localFolderNamesSet.size()) {
-            throw msgHelper.getExceptionWithError("Duplicate local folders");
-        }
-
-        if (!localFolderNamesSet.equals(driveFolderNamesSet)) {
+        if (!localFolderSet.equals(driveFolderSet)) {
             throw msgHelper.getExceptionWithError("Drive and local folders are not equal");
         }
 
-        HashMap<DocumentFile, HashSet<DocumentFile>> localFolderWithFiles = new HashMap<>();
+        HashMap<AbstractFile, HashSet<AbstractFile>> localFolderWithFiles = new HashMap<>();
 
-        for (DocumentFile folder : localFolderSet) {
-            localFolderWithFiles.put(folder, LocalFileHelper.getFolderFiles(folder));
+        for (AbstractFile folder : localFolderSet) {
+            localFolderWithFiles.put(folder, MainActivity.localHelper.getFolderFiles((LocalFile) folder));
         }
 
-        for (DocumentFile folder : localFolderWithFiles.keySet()) {
-            System.out.println(folder.getName());
-            for (DocumentFile file : localFolderWithFiles.get(folder)) {
-                System.out.println(file.getName());
-            }
-        }
-
-        return new FetchHelper(driveFoldersWithFiles,
-                localFolderWithFiles,
-                driveFolderNamesSet,
-                localFolderNamesSet);
+        return new FetchHelper(driveFoldersWithFiles, localFolderWithFiles);
     }
 
     public FetchHelper getFetcher(Activity activity, DocumentFile localFolder, String driveFolderName) throws Exception {
@@ -343,20 +296,16 @@ public class GoogleDriveHelper {
 
         File rootFolder = getFileByName(driveFolderName, DriveType.FOLDER);
 
-        HashSet<File> driveFolderSet = getNestedFolders(rootFolder);
-        driveFolderSet.add(rootFolder);
+        HashSet<AbstractFile> driveFolderSet = getNestedFolders(rootFolder);
+        driveFolderSet.add(new DriveFile(rootFolder));
 
-        List<String> driveFolderNamesList = getDriveNamesFromFiles(new ArrayList<>(driveFolderSet));
-        HashSet<String> driveFolderNamesSet = new HashSet<>(driveFolderNamesList);
+        System.out.println("NESTED FOLDERS");
+        System.out.println(driveFolderSet);
 
-        if (driveFolderNamesList.size() != driveFolderNamesSet.size()) {
-            throw msgHelper.getExceptionWithError("Duplicate folders on drive");
-        }
+        HashMap<AbstractFile, HashSet<AbstractFile>> driveFoldersWithFiles = new HashMap<>();
 
-        HashMap<File, HashSet<File>> driveFoldersWithFiles = new HashMap<>();
-
-        for (File folder : driveFolderSet) {
-            driveFoldersWithFiles.put(folder, getFolderFiles(folder));
+        for (AbstractFile folder : driveFolderSet) {
+            driveFoldersWithFiles.put(folder, getFolderFiles((DriveFile) folder));
         }
 
         System.out.println("ALL DRIVE FILES WITH FOLDERS");
@@ -366,37 +315,22 @@ public class GoogleDriveHelper {
 
         System.out.println("ALL LOCAL FILES WITH FOLDERS");
 
-        HashSet<DocumentFile> localFolderSet = LocalFileHelper.getNestedFolders(localFolder);
-        localFolderSet.add(localFolder);
+        HashSet<AbstractFile> localFolderSet = LocalFileHelper.getNestedFolders(localFolder);
+        localFolderSet.add(new LocalFile(localFolder));
 
-        List<String> localFolderNamesList = LocalFileHelper.getLocalNamesFromFiles(new ArrayList<>(localFolderSet));
-        HashSet<String> localFolderNamesSet = new HashSet<>(localFolderNamesList);
-
-        if (localFolderNamesList.size() != localFolderNamesSet.size()) {
-            throw msgHelper.getExceptionWithError("Duplicate local folders");
-        }
-
-        if (!localFolderNamesSet.equals(driveFolderNamesSet)) {
+        if (!localFolderSet.equals(driveFolderSet)) {
             throw msgHelper.getExceptionWithError("Drive and local folders are not equal");
         }
 
-        HashMap<DocumentFile, HashSet<DocumentFile>> localFolderWithFiles = new HashMap<>();
+        HashMap<AbstractFile, HashSet<AbstractFile>> localFolderWithFiles = new HashMap<>();
 
-        for (DocumentFile folder : localFolderSet) {
-            localFolderWithFiles.put(folder, LocalFileHelper.getFolderFiles(folder));
+        for (AbstractFile folder : localFolderSet) {
+            localFolderWithFiles.put(folder, MainActivity.localHelper.getFolderFiles((LocalFile) folder));
         }
 
-        for (DocumentFile folder : localFolderWithFiles.keySet()) {
-            System.out.println(folder.getName());
-            for (DocumentFile file : localFolderWithFiles.get(folder)) {
-                System.out.println(file.getName());
-            }
-        }
+        System.out.println(localFolderWithFiles);
 
-        return new FetchHelper(driveFoldersWithFiles,
-                localFolderWithFiles,
-                driveFolderNamesSet,
-                localFolderNamesSet);
+        return new FetchHelper(driveFoldersWithFiles, localFolderWithFiles);
     }
 
     public Task<FetchHelper> fetchData(Activity activity, DocumentFile localFolder, String driveFolderName) {
@@ -424,27 +358,23 @@ public class GoogleDriveHelper {
                 throw msgHelper.getExceptionWithError("Can't connect to network");
             }
 
-            HashMap<DocumentFile, HashSet<DocumentFile>> uploadToDriveFiles = ConfirmPushActivity.uploadToDriveFiles;
-            HashMap<File, HashSet<File>> deleteOnDriveFiles = ConfirmPushActivity.deleteOnDriveFiles;
+            HashMap<AbstractFile, HashSet<AbstractFile>> uploadToDriveFiles = ConfirmPushActivity.uploadToDriveFiles;
+            HashMap<AbstractFile, HashSet<AbstractFile>> deleteOnDriveFiles = ConfirmPushActivity.deleteOnDriveFiles;
 
-            final Integer totalSize = getMapSize(deleteOnDriveFiles) + LocalFileHelper.getMapSize(uploadToDriveFiles);
+            final Integer totalSize = FetchHelper.getMapSize(deleteOnDriveFiles) + FetchHelper.getMapSize(uploadToDriveFiles);
             Integer currentCompleted = 0;
 
             System.out.println("UPLOAD:");
             System.out.println(uploadToDriveFiles);
 
-            for (DocumentFile folder : uploadToDriveFiles.keySet()) {
-                for (DocumentFile file : uploadToDriveFiles.get(folder)) {
+            for (AbstractFile folder : uploadToDriveFiles.keySet()) {
+                for (AbstractFile file : uploadToDriveFiles.get(folder)) {
                     activity.runOnUiThread(() -> {
                         currentOperationNameTextView.setText("Uploading to drive");
                         currentOperationFileNameTextView.setText(file.getName());
                     });
 
-                    HashSet<File> driveSet = new HashSet<>(deleteOnDriveFiles.keySet());
-
-                    File driveFolder = SearchHelper.findDriveFileByName(driveSet, folder.getName());
-
-                    if (uploadToDriveFile(file, driveFolder)) {
+                    if (uploadToDriveFile((LocalFile) file, (DriveFile) folder)) {
                         System.out.println(file.getName() + " : " + "OK");
 
                         currentCompleted++;
@@ -464,14 +394,14 @@ public class GoogleDriveHelper {
             System.out.println("DELETE:");
             System.out.println(deleteOnDriveFiles);
 
-            for (File folder : deleteOnDriveFiles.keySet()) {
-                for (File file : deleteOnDriveFiles.get(folder)) {
+            for (AbstractFile folder : deleteOnDriveFiles.keySet()) {
+                for (AbstractFile file : deleteOnDriveFiles.get(folder)) {
                     activity.runOnUiThread(() -> {
                         currentOperationNameTextView.setText("Deleting from drive");
                         currentOperationFileNameTextView.setText(file.getName());
                     });
 
-                    if (deleteDriveFile(file)) {
+                    if (deleteDriveFile((DriveFile) file)) {
                         System.out.println("DELETE: " + file.getName() + " OK");
 
                         currentCompleted++;
@@ -528,30 +458,24 @@ public class GoogleDriveHelper {
                 throw msgHelper.getExceptionWithError("Can't connect to network");
             }
 
-            HashMap<File, HashSet<File>> downloadFromDriveFiles = ConfirmPullActivity.downloadFromDriveFiles;
-            HashMap<DocumentFile, HashSet<DocumentFile>> deleteInLocalFiles = ConfirmPullActivity.deleteInLocalFiles;
+            HashMap<AbstractFile, HashSet<AbstractFile>> downloadFromDriveFiles = ConfirmPullActivity.downloadFromDriveFiles;
+            HashMap<AbstractFile, HashSet<AbstractFile>> deleteInLocalFiles = ConfirmPullActivity.deleteInLocalFiles;
 
-            final Integer totalSize = getMapSize(downloadFromDriveFiles) + LocalFileHelper.getMapSize(deleteInLocalFiles);
+            final Integer totalSize = FetchHelper.getMapSize(downloadFromDriveFiles) + FetchHelper.getMapSize(deleteInLocalFiles);
             Integer currentCompleted = 0;
 
             System.out.println("DOWNLOAD:");
             System.out.println(downloadFromDriveFiles);
 
-            for (File folder : downloadFromDriveFiles.keySet()) {
-                for (File file : downloadFromDriveFiles.get(folder)) {
+            for (AbstractFile folder : downloadFromDriveFiles.keySet()) {
+                for (AbstractFile file : downloadFromDriveFiles.get(folder)) {
                     String name = file.getName();
                     activity.runOnUiThread(() -> {
                         currentOperationNameTextView.setText("Downloading from drive");
                         currentOperationFileNameTextView.setText(name);
                     });
 
-                    HashSet<DocumentFile> localSet = new HashSet<>(deleteInLocalFiles.keySet());
-
-                    DocumentFile localFolder =
-                            SearchHelper.findLocalFileByName(localSet,
-                                    folder.getName());
-
-                    if (downloadDriveFile(localFolder, file)) {
+                    if (downloadDriveFile((LocalFile) folder, (DriveFile) file)) {
                         System.out.println("DOWNLOAD: " + name + " OK");
 
                         currentCompleted++;
@@ -571,8 +495,8 @@ public class GoogleDriveHelper {
             System.out.println("DELETE:");
             System.out.println(deleteInLocalFiles);
 
-            for (DocumentFile folder : deleteInLocalFiles.keySet()) {
-                for (DocumentFile file : deleteInLocalFiles.get(folder)) {
+            for (AbstractFile folder : deleteInLocalFiles.keySet()) {
+                for (AbstractFile file : deleteInLocalFiles.get(folder)) {
                     String name = file.getName();
 
                     activity.runOnUiThread(() -> {
@@ -580,7 +504,7 @@ public class GoogleDriveHelper {
                         currentOperationFileNameTextView.setText(name);
                     });
 
-                    if (deleteLocalFile(folder, file)) {
+                    if (deleteLocalFile((LocalFile) folder, (LocalFile) file)) {
                         System.out.println("DELETE: " + name + " OK");
 
                         currentCompleted++;

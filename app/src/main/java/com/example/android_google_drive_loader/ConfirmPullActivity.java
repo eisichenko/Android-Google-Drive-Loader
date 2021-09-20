@@ -1,7 +1,6 @@
 package com.example.android_google_drive_loader;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -14,7 +13,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -23,12 +21,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.android_google_drive_loader.Enums.DriveType;
 import com.example.android_google_drive_loader.Enums.OperationType;
 import com.example.android_google_drive_loader.Enums.Theme;
-import com.example.android_google_drive_loader.Helpers.GoogleDriveHelper;
-import com.example.android_google_drive_loader.Helpers.LocalFileHelper;
-import com.example.android_google_drive_loader.Helpers.MessageHelper;
-import com.example.android_google_drive_loader.Helpers.SearchHelper;
+import com.example.android_google_drive_loader.Files.AbstractFile;
+import com.example.android_google_drive_loader.Helpers.FetchHelper;
 import com.example.android_google_drive_loader.Helpers.SetOperationsHelper;
-import com.google.api.services.drive.model.File;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,8 +35,8 @@ public class ConfirmPullActivity extends AppCompatActivity {
     private RecyclerView downloadFromDriveRecyclerView;
     private RecyclerView deleteInLocalRecyclerView;
 
-    public static HashMap<File, HashSet<File>> downloadFromDriveFiles;
-    public static HashMap<DocumentFile, HashSet<DocumentFile>> deleteInLocalFiles;
+    public static HashMap<AbstractFile, HashSet<AbstractFile>> downloadFromDriveFiles;
+    public static HashMap<AbstractFile, HashSet<AbstractFile>> deleteInLocalFiles;
 
     private TextView noneDownloadFromDriveTextView;
     private TextView noneDeleteInLocalTextView;
@@ -116,8 +111,8 @@ public class ConfirmPullActivity extends AppCompatActivity {
         deleteInLocalRecyclerView.addItemDecoration(decoration);
 
         if (MainActivity.operationType == OperationType.PULL) {
-            HashMap<File, HashSet<File>> driveFolderFiles;
-            HashMap<DocumentFile, HashSet<DocumentFile>> localFolderFiles;
+            HashMap<AbstractFile, HashSet<AbstractFile>> driveFolderFiles;
+            HashMap<AbstractFile, HashSet<AbstractFile>> localFolderFiles;
 
             deleteInLocalFiles = new HashMap<>();
             downloadFromDriveFiles = new HashMap<>();
@@ -131,61 +126,60 @@ public class ConfirmPullActivity extends AppCompatActivity {
                 localFolderFiles = MainActivity.fetchHelper.getLocalFolderFiles();
             }
 
-            for (File driveFolder : driveFolderFiles.keySet()) {
+            for (AbstractFile localFolder : localFolderFiles.keySet()) {
                 try {
-                    DocumentFile localFolder = SearchHelper.findLocalFileByName(localFolderFiles, driveFolder.getName());
+                    HashSet<AbstractFile> localSet = localFolderFiles.get(localFolder);
+                    HashSet<AbstractFile> driveSet = driveFolderFiles.get(localFolder);
 
-                    HashSet<String> localSet = LocalFileHelper.getLocalNamesFromSet(localFolderFiles.get(localFolder));
-                    HashSet<String> driveSet = GoogleDriveHelper.getDriveNamesFromSet(driveFolderFiles.get(driveFolder));
-
-                    HashSet<String> deleteRes = SetOperationsHelper.
-                            relativeComplement(localSet, driveSet);
-
-                    HashSet<String> downloadRes = SetOperationsHelper.
+                    HashSet<AbstractFile> downloadRes = SetOperationsHelper.
                             relativeComplement(driveSet, localSet);
 
-                    deleteInLocalFiles.put(localFolder, SearchHelper.strSetToDocumentFile(
-                            localFolderFiles.get(localFolder),
-                            deleteRes));
+                    HashSet<AbstractFile> deleteRes = SetOperationsHelper.
+                            relativeComplement(localSet, driveSet);
 
-                    downloadFromDriveFiles.put(driveFolder, SearchHelper.strSetToFile(
-                            driveFolderFiles.get(driveFolder),
-                            downloadRes));
+                    downloadFromDriveFiles.put(localFolder, downloadRes);
+                    deleteInLocalFiles.put(localFolder, deleteRes);
 
                 } catch (Exception e) {
                     MainActivity.msgHelper.showToast(e.getMessage());
                 }
             }
 
+            System.out.println("TO DELETE");
+            System.out.println(deleteInLocalFiles);
+
+            System.out.println("TO DOWNLOAD");
+            System.out.println(downloadFromDriveFiles);
+
             downloadFromDriveRecyclerViewItemList = new ArrayList<>();
             deleteInLocalRecyclerViewItemList = new ArrayList<>();
 
-            if (GoogleDriveHelper.getMapSize(downloadFromDriveFiles) == 0) {
+            if (FetchHelper.getMapSize(downloadFromDriveFiles) == 0) {
                 noneDownloadFromDriveTextView = findViewById(R.id.noneDownloadFromDriveTextView);
                 noneDownloadFromDriveTextView.setVisibility(View.VISIBLE);
             }
 
-            if (LocalFileHelper.getMapSize(deleteInLocalFiles) == 0) {
+            if (FetchHelper.getMapSize(deleteInLocalFiles) == 0) {
                 noneDeleteInLocalTextView = findViewById(R.id.noneDeleteInLocalTextView);
                 noneDeleteInLocalTextView.setVisibility(View.VISIBLE);
             }
 
-            for (File folder : downloadFromDriveFiles.keySet()) {
+            for (AbstractFile folder : downloadFromDriveFiles.keySet()) {
                 if (downloadFromDriveFiles.get(folder).size() == 0) {
                     continue;
                 }
                 downloadFromDriveRecyclerViewItemList.add(new RecyclerViewItem("FOLDER: " + folder.getName(), DriveType.FOLDER));
-                for (File file : downloadFromDriveFiles.get(folder)) {
+                for (AbstractFile file : downloadFromDriveFiles.get(folder)) {
                     downloadFromDriveRecyclerViewItemList.add(new RecyclerViewItem(file.getName()));
                 }
             }
 
-            for (DocumentFile folder : deleteInLocalFiles.keySet()) {
+            for (AbstractFile folder : deleteInLocalFiles.keySet()) {
                 if (deleteInLocalFiles.get(folder).size() == 0) {
                     continue;
                 }
                 deleteInLocalRecyclerViewItemList.add(new RecyclerViewItem("FOLDER: " + folder.getName(), DriveType.FOLDER));
-                for (DocumentFile file : deleteInLocalFiles.get(folder)) {
+                for (AbstractFile file : deleteInLocalFiles.get(folder)) {
                     System.out.println("DELETE: " + file.getName());
                     deleteInLocalRecyclerViewItemList.add(new RecyclerViewItem(file.getName()));
                 }

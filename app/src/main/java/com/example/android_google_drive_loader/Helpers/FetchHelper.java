@@ -2,6 +2,7 @@ package com.example.android_google_drive_loader.Helpers;
 
 import androidx.documentfile.provider.DocumentFile;
 
+import com.example.android_google_drive_loader.Files.AbstractFile;
 import com.google.api.services.drive.model.File;
 
 import java.util.ArrayList;
@@ -12,64 +13,33 @@ import java.util.Map;
 
 public class FetchHelper {
 
-    private HashMap<File, HashSet<File>> driveFolderFiles;
-    private HashMap<DocumentFile, HashSet<DocumentFile>> localFolderFiles;
-    private HashSet<String> driveFolderNames;
-    private HashSet<String> localFolderNames;
+    private HashMap<AbstractFile, HashSet<AbstractFile>> driveFolderFiles;
+    private HashMap<AbstractFile, HashSet<AbstractFile>> localFolderFiles;
 
-    public FetchHelper(HashMap<File, HashSet<File>> driveFolderFiles,
-                       HashMap<DocumentFile, HashSet<DocumentFile>> localFolderFiles,
-                       HashSet<String> driveFolderNames,
-                       HashSet<String> localFolderNames) {
+    public FetchHelper(HashMap<AbstractFile, HashSet<AbstractFile>> driveFolderFiles,
+                       HashMap<AbstractFile, HashSet<AbstractFile>> localFolderFiles) {
         this.driveFolderFiles = driveFolderFiles;
         this.localFolderFiles = localFolderFiles;
-        this.driveFolderNames = driveFolderNames;
-        this.localFolderNames = localFolderNames;
     }
 
-    public void setDriveFolderNames(HashSet<String> driveFolderNames) {
-        this.driveFolderNames = driveFolderNames;
-    }
-
-    public void setLocalFolderNames(HashSet<String> localFolderNames) {
-        this.localFolderNames = localFolderNames;
-    }
-
-    public HashSet<String> getDriveFolderNames() {
-        return driveFolderNames;
-    }
-
-    public HashSet<String> getLocalFolderNames() {
-        return localFolderNames;
-    }
-
-    public HashMap<File, HashSet<File>> getDriveFolderFiles() {
+    public HashMap<AbstractFile, HashSet<AbstractFile>> getDriveFolderFiles() {
         return driveFolderFiles;
     }
 
-    public void setDriveFolderFiles(HashMap<File, HashSet<File>> driveFolderFiles) {
-        this.driveFolderFiles = driveFolderFiles;
-    }
-
-    public HashMap<DocumentFile, HashSet<DocumentFile>> getLocalFolderFiles() {
+    public HashMap<AbstractFile, HashSet<AbstractFile>> getLocalFolderFiles() {
         return localFolderFiles;
     }
 
-    public void setLocalFolderFiles(HashMap<DocumentFile, HashSet<DocumentFile>> localFolderFiles) {
-        this.localFolderFiles = localFolderFiles;
+    public Boolean mapsAreEqual() {
+        return driveFolderFiles.equals(localFolderFiles);
     }
 
-    public Boolean mapsAreEqual() throws Exception {
-        for (File driveFolder : driveFolderFiles.keySet()) {
-            DocumentFile documentFile = SearchHelper.findLocalFileByName(localFolderFiles, driveFolder.getName());
+    public static Integer getMapSize(HashMap<AbstractFile, HashSet<AbstractFile>> m) {
+        Integer sum = 0;
 
-            HashSet<String> driveSet = GoogleDriveHelper.getDriveNamesFromSet(driveFolderFiles.get(driveFolder));
-            HashSet<String> localSet = LocalFileHelper.getLocalNamesFromSet(localFolderFiles.get(documentFile));
-
-            if (!driveSet.equals(localSet)) {
-                return false;
-            }
+        for (AbstractFile folder : m.keySet()) {
+            sum += m.get(folder).size();
         }
-        return true;
+        return sum;
     }
 }

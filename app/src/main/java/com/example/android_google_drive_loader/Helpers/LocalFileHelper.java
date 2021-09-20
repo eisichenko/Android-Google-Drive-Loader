@@ -7,110 +7,72 @@ import android.os.Environment;
 
 import androidx.documentfile.provider.DocumentFile;
 
+import com.example.android_google_drive_loader.Files.AbstractFile;
+import com.example.android_google_drive_loader.Files.LocalFile;
 import com.example.android_google_drive_loader.MainActivity;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 
 
 public class LocalFileHelper {
 
-    public static DocumentFile getFileFromUri(Context context, Uri uri) {
+    private Context context;
+
+    public LocalFileHelper(Context context) {
+        this.context = context;
+    }
+
+    public DocumentFile getFileFromUri(Uri uri) {
         DocumentFile result = DocumentFile.fromTreeUri(context, uri);
         context.grantUriPermission(context.getPackageName(), uri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         context.getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         return result;
     }
 
-    public static List<String> getLocalNamesFromFiles(List<DocumentFile> files) {
-        List<String> res = new ArrayList<>();
-
-        for (DocumentFile file : files) {
-            res.add(file.getName());
-        }
-
-        return res;
-    }
-
-    public static HashSet<String> getLocalNamesFromSet(HashSet<DocumentFile> files) {
-        HashSet<String> res = new HashSet<>();
-
-        for (DocumentFile file : files) {
-            res.add(file.getName());
-        }
-
-        return res;
-    }
-
-    public static int getMapSize(HashMap<DocumentFile, HashSet<DocumentFile>> localFiles) {
-        int res = 0;
-        for (HashSet<DocumentFile> set : localFiles.values()) {
-            res += set.size();
-        }
-        return res;
-    }
-
-    public static HashSet<DocumentFile> getNestedFolders(DocumentFile folder) throws Exception {
+    public static HashSet<AbstractFile> getNestedFolders(DocumentFile folder) throws Exception {
         if (!folder.isDirectory()) {
             throw MainActivity.msgHelper.getExceptionWithError("File is not directory");
         }
 
         DocumentFile[] files = folder.listFiles();
 
-        ArrayList<DocumentFile> res = new ArrayList<>();
+        HashSet<AbstractFile> res = new HashSet<>();
 
         for (DocumentFile file : files) {
             if (file.isDirectory()) {
-                res.add(file);
+                LocalFile localFile = new LocalFile(file);
+                if (res.contains(localFile)) {
+                    throw MainActivity.msgHelper.getExceptionWithError("Duplicate local folders in " + folder.getName());
+                }
+                res.add(localFile);
+                res.addAll(getNestedFolders(file));
             }
         }
 
-        HashSet<DocumentFile> resSet = new HashSet<>(res);
-
-        if (resSet.size() != res.size()) {
-            throw MainActivity.msgHelper.getExceptionWithError("Duplicate local folders in " + folder.getName());
-        }
-
-        HashSet<DocumentFile> folderSet = new HashSet<>();
-
-        for (DocumentFile curFolder : resSet) {
-            folderSet.add(curFolder);
-            folderSet.addAll(getNestedFolders(curFolder));
-        }
-
-        return folderSet;
+        return res;
     }
 
-    public static HashSet<DocumentFile> getFolderFiles(DocumentFile directory) throws Exception {
+    public HashSet<AbstractFile> getFolderFiles(LocalFile localFile) throws Exception {
+        DocumentFile directory = localFile.getFile();
+
         if (!directory.isDirectory()) {
             throw MainActivity.msgHelper.getExceptionWithError("File is not directory");
         }
 
         DocumentFile[] files = directory.listFiles();
 
-        List<DocumentFile> res = new ArrayList<>();
+        HashSet<AbstractFile> res = new HashSet<>();
 
         for (DocumentFile file : files) {
             if (!file.isDirectory()) {
-                res.add(file);
+                res.add(new LocalFile(file));
             }
         }
 
-        return new HashSet<>(res);
-    }
-
-    public static File getFileInDirectoryByName(DocumentFile directory, String fileName) {
-        String directoryPath = getAbsolutePathStringFromUri(directory.getUri());
-
-        ArrayList<String> strings = new ArrayList<>();
-        strings.add(directoryPath);
-        strings.add(fileName);
-
-        return new File(pathCombine(strings));
+        return res;
     }
 
     public static File getFileFromDocumentFile(DocumentFile file) {
@@ -151,5 +113,4 @@ public class LocalFileHelper {
 
         return res;
     }
-
 }

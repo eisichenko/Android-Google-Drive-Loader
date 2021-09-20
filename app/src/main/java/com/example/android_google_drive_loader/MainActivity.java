@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CODE_CHOOSE_FOLDER = 3;
 
     public static GoogleDriveHelper driveHelper;
+    public static LocalFileHelper localHelper;
     public static MessageHelper msgHelper;
     public static DocumentFile pickedDir;
     public static String driveFolderName;
@@ -118,6 +119,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         msgHelper = new MessageHelper(getApplicationContext());
+        localHelper = new LocalFileHelper(getApplicationContext());
 
         settings = getSharedPreferences(APP_PREFERENCES_NAME, Context.MODE_PRIVATE);
 
@@ -400,7 +402,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     break;
                 case REQUEST_CODE_CHOOSE_FOLDER:
-                    pickedDir = LocalFileHelper.getFileFromUri(getApplicationContext(), resultData.getData());
+                    pickedDir = localHelper.getFileFromUri(resultData.getData());
                     chosenFolderTextView.setText(LocalFileHelper.getAbsolutePathStringFromUri(pickedDir.getUri()));
 
                     settings.edit().putString(LOCAL_DIRECTORY_URI_CACHE_NAME, pickedDir.getUri().toString()).apply();
