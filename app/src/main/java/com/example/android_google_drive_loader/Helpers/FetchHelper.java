@@ -3,6 +3,8 @@ package com.example.android_google_drive_loader.Helpers;
 import androidx.documentfile.provider.DocumentFile;
 
 import com.example.android_google_drive_loader.Files.AbstractFile;
+import com.example.android_google_drive_loader.Files.DriveFile;
+import com.example.android_google_drive_loader.Files.LocalFile;
 import com.google.api.services.drive.model.File;
 
 import java.util.ArrayList;
@@ -13,20 +15,20 @@ import java.util.Map;
 
 public class FetchHelper {
 
-    private HashMap<AbstractFile, HashSet<AbstractFile>> driveFolderFiles;
-    private HashMap<AbstractFile, HashSet<AbstractFile>> localFolderFiles;
+    private HashMap<DriveFile, HashSet<DriveFile>> driveFolderFiles;
+    private HashMap<LocalFile, HashSet<LocalFile>> localFolderFiles;
 
-    public FetchHelper(HashMap<AbstractFile, HashSet<AbstractFile>> driveFolderFiles,
-                       HashMap<AbstractFile, HashSet<AbstractFile>> localFolderFiles) {
+    public FetchHelper(HashMap<DriveFile, HashSet<DriveFile>> driveFolderFiles,
+                       HashMap<LocalFile, HashSet<LocalFile>> localFolderFiles) {
         this.driveFolderFiles = driveFolderFiles;
         this.localFolderFiles = localFolderFiles;
     }
 
-    public HashMap<AbstractFile, HashSet<AbstractFile>> getDriveFolderFiles() {
+    public HashMap<DriveFile, HashSet<DriveFile>> getDriveFolderFiles() {
         return driveFolderFiles;
     }
 
-    public HashMap<AbstractFile, HashSet<AbstractFile>> getLocalFolderFiles() {
+    public HashMap<LocalFile, HashSet<LocalFile>> getLocalFolderFiles() {
         return localFolderFiles;
     }
 
@@ -34,7 +36,7 @@ public class FetchHelper {
         return driveFolderFiles.equals(localFolderFiles);
     }
 
-    public static Integer getMapSize(HashMap<AbstractFile, HashSet<AbstractFile>> m) {
+    public static <T extends AbstractFile, U extends AbstractFile> Integer getMapSize(HashMap<T, HashSet<U>> m) {
         Integer sum = 0;
 
         for (AbstractFile folder : m.keySet()) {

@@ -32,14 +32,14 @@ public class LocalFileHelper {
         return result;
     }
 
-    public static HashSet<AbstractFile> getNestedFolders(DocumentFile folder) throws Exception {
+    public static HashSet<LocalFile> getNestedFolders(DocumentFile folder) throws Exception {
         if (!folder.isDirectory()) {
             throw MainActivity.msgHelper.getExceptionWithError("File is not directory");
         }
 
         DocumentFile[] files = folder.listFiles();
 
-        HashSet<AbstractFile> res = new HashSet<>();
+        HashSet<LocalFile> res = new HashSet<>();
 
         for (DocumentFile file : files) {
             if (file.isDirectory()) {
@@ -55,7 +55,7 @@ public class LocalFileHelper {
         return res;
     }
 
-    public HashSet<AbstractFile> getFolderFiles(LocalFile localFile) throws Exception {
+    public HashSet<LocalFile> getFolderFiles(LocalFile localFile) throws Exception {
         DocumentFile directory = localFile.getFile();
 
         if (!directory.isDirectory()) {
@@ -64,7 +64,7 @@ public class LocalFileHelper {
 
         DocumentFile[] files = directory.listFiles();
 
-        HashSet<AbstractFile> res = new HashSet<>();
+        HashSet<LocalFile> res = new HashSet<>();
 
         for (DocumentFile file : files) {
             if (!file.isDirectory()) {

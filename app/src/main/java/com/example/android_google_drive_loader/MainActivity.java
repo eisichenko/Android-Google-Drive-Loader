@@ -385,7 +385,6 @@ public class MainActivity extends AppCompatActivity {
                     handleSignInResult(resultData);
                     break;
                 case REQUEST_CODE_CHECK_SETTINGS:
-                    System.out.println("FUCK YOU AND YOUR MOM");
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                         if (Environment.isExternalStorageManager()) {
                             msgHelper.showToast("Access was given successfully");
