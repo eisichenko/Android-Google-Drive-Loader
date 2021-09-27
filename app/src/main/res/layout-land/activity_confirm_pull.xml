@@ -3,8 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/main_background_color"
     tools:context=".ConfirmPushActivity"
+    android:background="?attr/main_background_color"
     android:orientation="vertical">
 
     <androidx.core.widget.NestedScrollView
@@ -22,12 +22,12 @@
                 android:layout_marginTop="10dp">
 
                 <TextView
-                    android:id="@+id/uploadTextView"
+                    android:id="@+id/downloadFromDriveTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerInParent="true"
                     android:layout_marginTop="10dp"
-                    android:text="@string/upload_text_view_value"
+                    android:text="@string/download_from_drive_value"
                     android:textColor="?attr/main_text_color"
                     android:textSize="20sp"
                     android:textStyle="bold" />
@@ -40,7 +40,7 @@
 
                 <TextView
                     android:visibility="gone"
-                    android:id="@+id/noneUploadDriveTextView"
+                    android:id="@+id/noneDownloadFromDriveTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerInParent="true"
@@ -51,7 +51,7 @@
             </RelativeLayout>
 
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/uploadFromDriveRecyclerView"
+                android:id="@+id/downloadFromDriveRecyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp" />
@@ -72,12 +72,12 @@
                         android:layout_marginTop="20dp">
 
                         <TextView
-                            android:id="@+id/deleteOnDriveTextView"
+                            android:id="@+id/deleteInLocalTextView"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_centerInParent="true"
-                            android:text="@string/delete_on_drive_text_view_value"
                             android:textColor="?attr/main_text_color"
+                            android:text="@string/delete_in_local_storage_value"
                             android:textSize="20sp"
                             android:textStyle="bold" />
                     </RelativeLayout>
@@ -89,7 +89,7 @@
 
                         <TextView
                             android:visibility="gone"
-                            android:id="@+id/noneDeleteDriveTextView"
+                            android:id="@+id/noneDeleteInLocalTextView"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_centerInParent="true"
@@ -100,7 +100,7 @@
                     </RelativeLayout>
 
                     <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/deleteFromDriveRecyclerView"
+                        android:id="@+id/deleteInLocalRecyclerView"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
@@ -112,13 +112,13 @@
                         android:layout_marginTop="20dp">
 
                         <Button
-                            android:id="@+id/startPushButton"
+                            android:id="@+id/startPullButton"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_centerHorizontal="true"
                             android:layout_marginBottom="30dp"
                             android:backgroundTint="#0f0"
-                            android:text="@string/start_push_button_value"
+                            android:text="@string/start_pull_button_value"
                             android:textColor="#000" />
                     </RelativeLayout>
                 </LinearLayout>

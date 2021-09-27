@@ -1,17 +1,11 @@
 package com.example.android_google_drive_loader.Helpers;
 
-import androidx.documentfile.provider.DocumentFile;
-
 import com.example.android_google_drive_loader.Files.AbstractFile;
 import com.example.android_google_drive_loader.Files.DriveFile;
 import com.example.android_google_drive_loader.Files.LocalFile;
-import com.google.api.services.drive.model.File;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 
 public class FetchHelper {
 

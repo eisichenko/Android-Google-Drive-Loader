@@ -3,7 +3,6 @@ package com.example.android_google_drive_loader.Helpers;
 import com.example.android_google_drive_loader.Files.AbstractFile;
 
 import java.util.HashSet;
-import java.util.List;
 
 public class SetOperationsHelper {
     public static <T extends AbstractFile, U extends AbstractFile> HashSet<T> relativeComplement(HashSet<T> set1, HashSet<U> set2) {

@@ -6,7 +6,7 @@
     <string name="chosen_folder">None</string>
     <string name="choose_folder_btn_name">Choose</string>
     <string name="edit_text_drive_folder_hint">Drive folder name ...</string>
-    <string name="upload_text_view_value">Upload from drive list</string>
+    <string name="upload_text_view_value">Upload to drive list</string>
     <string name="delete_on_drive_text_view_value">Delete on drive list</string>
     <string name="start_push_button_value">Start Push</string>
     <string name="none_list_items_value">None</string>

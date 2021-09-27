@@ -21,12 +21,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.android_google_drive_loader.Enums.DriveType;
 import com.example.android_google_drive_loader.Enums.OperationType;
 import com.example.android_google_drive_loader.Enums.Theme;
-import com.example.android_google_drive_loader.Files.AbstractFile;
 import com.example.android_google_drive_loader.Files.DriveFile;
 import com.example.android_google_drive_loader.Files.LocalFile;
 import com.example.android_google_drive_loader.Helpers.FetchHelper;
 import com.example.android_google_drive_loader.Helpers.SetOperationsHelper;
-import com.google.api.services.drive.Drive;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -1,14 +1,11 @@
 package com.example.android_google_drive_loader;
 
 import android.Manifest;
-import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -31,12 +28,12 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.documentfile.provider.DocumentFile;
 
+import com.example.android_google_drive_loader.Enums.OperationType;
+import com.example.android_google_drive_loader.Enums.StopwatchState;
 import com.example.android_google_drive_loader.Enums.Theme;
 import com.example.android_google_drive_loader.Helpers.FetchHelper;
 import com.example.android_google_drive_loader.Helpers.GoogleDriveHelper;
 import com.example.android_google_drive_loader.Helpers.LocalFileHelper;
-import com.example.android_google_drive_loader.Enums.OperationType;
-import com.example.android_google_drive_loader.Enums.StopwatchState;
 import com.example.android_google_drive_loader.Helpers.MessageHelper;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;

@@ -2,7 +2,6 @@ package com.example.android_google_drive_loader.Helpers;
 
 import static com.example.android_google_drive_loader.MainActivity.msgHelper;
 
-import android.accounts.AbstractAccountAuthenticator;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
@@ -18,7 +17,6 @@ import androidx.documentfile.provider.DocumentFile;
 import com.example.android_google_drive_loader.ConfirmPullActivity;
 import com.example.android_google_drive_loader.ConfirmPushActivity;
 import com.example.android_google_drive_loader.Enums.DriveType;
-import com.example.android_google_drive_loader.Files.AbstractFile;
 import com.example.android_google_drive_loader.Files.DriveFile;
 import com.example.android_google_drive_loader.Files.LocalFile;
 import com.example.android_google_drive_loader.MainActivity;
