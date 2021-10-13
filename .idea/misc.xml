@@ -13,6 +13,7 @@
         <entry key="app/src/main/res/drawable/is_theme.xml" value="0.3338541666666667" />
         <entry key="app/src/main/res/drawable/list_divider.xml" value="0.31296296296296294" />
         <entry key="app/src/main/res/drawable/list_item_background.xml" value="0.3338541666666667" />
+        <entry key="app/src/main/res/drawable/splash_screen_background.xml" value="0.3338541666666667" />
         <entry key="app/src/main/res/layout-land/activity_confirm_pull.xml" value="0.4515625" />
         <entry key="app/src/main/res/layout-land/activity_confirm_push.xml" value="0.22916666666666666" />
         <entry key="app/src/main/res/layout-land/activity_finish_job.xml" value="0.4515625" />
