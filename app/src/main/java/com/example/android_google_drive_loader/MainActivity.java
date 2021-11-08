@@ -15,6 +15,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -140,6 +141,9 @@ public class MainActivity extends AppCompatActivity {
 
         pushButton = findViewById(R.id.pushButton);
         driveFolderNameEditText = findViewById(R.id.driveFolderEditText);
+        if(driveFolderNameEditText.requestFocus()) {
+            getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        }
 
         progressBar = findViewById(R.id.progressBar);
         loadingTextView = findViewById(R.id.currentFetchOperationTextView);
