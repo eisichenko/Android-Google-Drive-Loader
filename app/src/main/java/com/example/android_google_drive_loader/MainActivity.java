@@ -1,21 +1,15 @@
 package com.example.android_google_drive_loader;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.Settings;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -25,7 +19,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.documentfile.provider.DocumentFile;
 
@@ -45,8 +38,7 @@ import com.google.android.gms.common.api.Scope;
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_CODE_SIGN_IN = 1;
-    private static final int REQUEST_CODE_CHECK_SETTINGS = 2;
-    private static final int REQUEST_CODE_CHOOSE_FOLDER = 3;
+    private static final int REQUEST_CODE_CHOOSE_FOLDER = 2;
 
     public static GoogleDriveHelper driveHelper;
     public static LocalFileHelper localHelper;
@@ -94,24 +86,21 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.theme_menu:
-                if (currentTheme == Theme.DAY) {
-                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-                    settings.edit().putString(THEME_CACHE_NAME, Theme.NIGHT.toString()).apply();
-                    item.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_theme_day));
-                    currentTheme = Theme.NIGHT;
-                }
-                else {
-                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-                    settings.edit().putString(THEME_CACHE_NAME, Theme.DAY.toString()).apply();
-                    item.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_theme_night));
-                    currentTheme = Theme.DAY;
-                }
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+        if (item.getItemId() == R.id.theme_menu) {
+            if (currentTheme == Theme.DAY) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                settings.edit().putString(THEME_CACHE_NAME, Theme.NIGHT.toString()).apply();
+                item.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_theme_day));
+                currentTheme = Theme.NIGHT;
+            } else {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                settings.edit().putString(THEME_CACHE_NAME, Theme.DAY.toString()).apply();
+                item.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_theme_night));
+                currentTheme = Theme.DAY;
+            }
+            return true;
         }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -141,9 +130,6 @@ public class MainActivity extends AppCompatActivity {
 
         pushButton = findViewById(R.id.pushButton);
         driveFolderNameEditText = findViewById(R.id.driveFolderEditText);
-        if(driveFolderNameEditText.requestFocus()) {
-            getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-        }
 
         progressBar = findViewById(R.id.progressBar);
         loadingTextView = findViewById(R.id.currentFetchOperationTextView);
@@ -280,25 +266,9 @@ public class MainActivity extends AppCompatActivity {
 
         chooseButton = findViewById(R.id.chooseFolderBtn);
         chooseButton.setOnClickListener(view -> {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
-                startActivityForResult(Intent.createChooser(intent, "Check Settings"), REQUEST_CODE_CHECK_SETTINGS);
-            }
-            else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R &&
-                    (ContextCompat.checkSelfPermission( this, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
-                            PackageManager.PERMISSION_GRANTED ||
-                            ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) !=
-                                    PackageManager.PERMISSION_GRANTED)) {
-                ActivityCompat.requestPermissions(this,
-                        new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                Manifest.permission.READ_EXTERNAL_STORAGE},
-                        REQUEST_CODE_CHECK_SETTINGS);
-            }
-            else {
-                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-                intent.addCategory(Intent.CATEGORY_DEFAULT);
-                startActivityForResult(Intent.createChooser(intent, "Choose directory"), REQUEST_CODE_CHOOSE_FOLDER);
-            }
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+            intent.addCategory(Intent.CATEGORY_DEFAULT);
+            startActivityForResult(Intent.createChooser(intent, "Choose directory"), REQUEST_CODE_CHOOSE_FOLDER);
         });
 
         chosenFolderTextView = findViewById(R.id.chosenFolder);
@@ -385,22 +355,6 @@ public class MainActivity extends AppCompatActivity {
                 case REQUEST_CODE_SIGN_IN:
                     handleSignInResult(resultData);
                     break;
-                case REQUEST_CODE_CHECK_SETTINGS:
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        if (Environment.isExternalStorageManager()) {
-                            msgHelper.showToast("Access was given successfully");
-                            chooseButton.callOnClick();
-                        }
-                        else {
-                            msgHelper.showToast("App won't work without access");
-                            return;
-                        }
-                    }
-                    else {
-                        msgHelper.showToast("Access was given successfully");
-                        chooseButton.callOnClick();
-                    }
-                    break;
                 case REQUEST_CODE_CHOOSE_FOLDER:
                     pickedDir = localHelper.getFileFromUri(resultData.getData());
                     chosenFolderTextView.setText(LocalFileHelper.getAbsolutePathStringFromUri(pickedDir.getUri()));
@@ -412,21 +366,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         super.onActivityResult(requestCode, resultCode, resultData);
-    }
-
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == REQUEST_CODE_CHECK_SETTINGS) {
-            if (grantResults.length > 0
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                msgHelper.showToast("Access was given successfully");
-                chooseButton.callOnClick();
-            } else {
-                msgHelper.showToast("App won't work without access");
-            }
-            return;
-        }
-
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     private void handleSignInResult(Intent result) {
