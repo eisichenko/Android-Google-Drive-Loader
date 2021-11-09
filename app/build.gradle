@@ -2,6 +2,11 @@ plugins {
     id 'com.android.application'
 }
 
+configurations {
+    all {
+        exclude module: 'httpclient'
+    }
+}
 
 android {
     compileSdk 31
