@@ -24,7 +24,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         this.itemList = itemList;
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         private TextView recyclerViewItemName;
 
         public ViewHolder(@NonNull View itemView) {

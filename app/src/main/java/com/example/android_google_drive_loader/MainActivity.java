@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CODE_CHOOSE_FOLDER = 2;
 
     public static GoogleDriveHelper driveHelper;
-    public static LocalFileHelper localHelper;
+    public LocalFileHelper localHelper = new LocalFileHelper(this);
     public static MessageHelper msgHelper;
     public static DocumentFile pickedDir;
     public static String driveFolderName;
@@ -106,7 +106,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         msgHelper = new MessageHelper(getApplicationContext());
-        localHelper = new LocalFileHelper(getApplicationContext());
 
         settings = getSharedPreferences(APP_PREFERENCES_NAME, Context.MODE_PRIVATE);
 

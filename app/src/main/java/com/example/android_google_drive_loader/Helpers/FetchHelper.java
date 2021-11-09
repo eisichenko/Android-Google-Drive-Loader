@@ -31,7 +31,7 @@ public class FetchHelper {
     }
 
     public static <T extends AbstractFile, U extends AbstractFile> Integer getMapSize(HashMap<T, HashSet<U>> m) {
-        Integer sum = 0;
+        int sum = 0;
 
         for (AbstractFile folder : m.keySet()) {
             sum += m.get(folder).size();

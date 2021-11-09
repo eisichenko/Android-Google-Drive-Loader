@@ -188,7 +188,7 @@ public class GoogleDriveHelper {
         DocumentFile localDocumentFile = file.getFile();
 
         File metadata = new File()
-                .setParents(Arrays.asList(driveFolder.getId()))
+                .setParents(Collections.singletonList(driveFolder.getId()))
                 .setName(file.getName());
 
         java.io.File localFile = LocalFileHelper.getFileFromDocumentFile(localDocumentFile);
@@ -260,6 +260,7 @@ public class GoogleDriveHelper {
     }
 
     public FetchHelper getFetcher(DocumentFile localFolder, String driveFolderName) throws Exception {
+        LocalFileHelper localHelper = new LocalFileHelper(appContext);
         File rootFolder = getFileByName(driveFolderName, DriveType.FOLDER);
 
         HashSet<DriveFile> driveFolderSet = getNestedFolders(rootFolder);
@@ -281,13 +282,14 @@ public class GoogleDriveHelper {
         HashMap<LocalFile, HashSet<LocalFile>> localFolderWithFiles = new HashMap<>();
 
         for (LocalFile folder : localFolderSet) {
-            localFolderWithFiles.put(folder, MainActivity.localHelper.getFolderFiles(folder));
+            localFolderWithFiles.put(folder, localHelper.getFolderFiles(folder));
         }
 
         return new FetchHelper(driveFoldersWithFiles, localFolderWithFiles);
     }
 
     public FetchHelper getFetcher(Activity activity, DocumentFile localFolder, String driveFolderName) throws Exception {
+        LocalFileHelper localHelper = new LocalFileHelper(appContext);
         TextView currentFetchOperationTextView = activity.findViewById(R.id.currentFetchOperationTextView);
 
         activity.runOnUiThread(() -> currentFetchOperationTextView.setText("Getting drive files..."));
@@ -323,7 +325,7 @@ public class GoogleDriveHelper {
         HashMap<LocalFile, HashSet<LocalFile>> localFolderWithFiles = new HashMap<>();
 
         for (LocalFile folder : localFolderSet) {
-            localFolderWithFiles.put(folder, MainActivity.localHelper.getFolderFiles(folder));
+            localFolderWithFiles.put(folder, localHelper.getFolderFiles(folder));
         }
 
         System.out.println(localFolderWithFiles);
@@ -359,8 +361,8 @@ public class GoogleDriveHelper {
             HashMap<DriveFile, HashSet<LocalFile>> uploadToDriveFiles = ConfirmPushActivity.uploadToDriveFiles;
             HashMap<DriveFile, HashSet<DriveFile>> deleteOnDriveFiles = ConfirmPushActivity.deleteOnDriveFiles;
 
-            final Integer totalSize = FetchHelper.getMapSize(deleteOnDriveFiles) + FetchHelper.getMapSize(uploadToDriveFiles);
-            Integer currentCompleted = 0;
+            final int totalSize = FetchHelper.getMapSize(deleteOnDriveFiles) + FetchHelper.getMapSize(uploadToDriveFiles);
+            int currentCompleted = 0;
 
             System.out.println("UPLOAD:");
             System.out.println(uploadToDriveFiles);
@@ -459,8 +461,8 @@ public class GoogleDriveHelper {
             HashMap<LocalFile, HashSet<DriveFile>> downloadFromDriveFiles = ConfirmPullActivity.downloadFromDriveFiles;
             HashMap<LocalFile, HashSet<LocalFile>> deleteInLocalFiles = ConfirmPullActivity.deleteInLocalFiles;
 
-            final Integer totalSize = FetchHelper.getMapSize(downloadFromDriveFiles) + FetchHelper.getMapSize(deleteInLocalFiles);
-            Integer currentCompleted = 0;
+            final int totalSize = FetchHelper.getMapSize(downloadFromDriveFiles) + FetchHelper.getMapSize(deleteInLocalFiles);
+            int currentCompleted = 0;
 
             System.out.println("DOWNLOAD:");
             System.out.println(downloadFromDriveFiles);

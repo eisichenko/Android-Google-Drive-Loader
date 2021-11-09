@@ -102,16 +102,16 @@ public class FinishJobActivity extends AppCompatActivity {
                     if (MainActivity.stopwatchState == StopwatchState.RUNNING) {
                         currentTimeInSeconds++;
 
-                        Integer minutes = currentTimeInSeconds / 60;
-                        Integer seconds = currentTimeInSeconds % 60;
+                        int minutes = currentTimeInSeconds / 60;
+                        int seconds = currentTimeInSeconds % 60;
 
                         if (minutes > 0) {
                             timeTextView.setText(getResources().getString(R.string.time_text_view_value)
-                                    + " " + minutes + " m " + seconds.toString() + " s");
+                                    + " " + minutes + " m " + Integer.toString(seconds) + " s");
                         }
                         else {
                             timeTextView.setText(getResources().getString(R.string.time_text_view_value)
-                                    + " " + seconds.toString() + " s");
+                                    + " " + Integer.toString(seconds) + " s");
                         }
 
                         handler.postDelayed(this, 1000);

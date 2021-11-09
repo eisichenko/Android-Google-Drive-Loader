@@ -96,20 +96,20 @@ public class LocalFileHelper {
     }
 
     public static String pathCombine(ArrayList<String> pathStrings) {
-        String res = "";
+        StringBuilder res = new StringBuilder();
 
         for (String str : pathStrings) {
             if (res.length() == 0) {
-                res += str;
+                res.append(str);
             }
             else if (res.charAt(res.length() - 1) == '/') {
-                res += str;
+                res.append(str);
             }
             else {
-                res += '/' + str;
+                res.append('/').append(str);
             }
         }
 
-        return res;
+        return res.toString();
     }
 }
