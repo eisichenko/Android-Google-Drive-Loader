@@ -15,10 +15,11 @@
         android:ellipsize="middle"
         android:gravity="start"
         android:singleLine="true"
+        android:textColor="?attr/blurred_text_color"
         android:text="qweqwe"
         android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent" />
 </RelativeLayout>

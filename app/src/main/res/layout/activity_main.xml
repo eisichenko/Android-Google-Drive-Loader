@@ -82,6 +82,8 @@
         android:layout_height="wrap_content"
         android:ems="10"
         android:importantForAutofill="no"
+        android:textColor="?attr/main_text_color"
+        android:textColorHint="#898484"
         android:hint="@string/edit_text_drive_folder_hint"
         android:backgroundTint="#A210C6"
         android:inputType="textPersonName"

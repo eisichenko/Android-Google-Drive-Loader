@@ -1,9 +1,11 @@
 package com.example.android_google_drive_loader;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
@@ -19,6 +21,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.documentfile.provider.DocumentFile;
 
@@ -39,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_CODE_SIGN_IN = 1;
     private static final int REQUEST_CODE_CHOOSE_FOLDER = 2;
+    private static final int REQUEST_PERMISSIONS_ON_PUSH = 3;
+    private static final int REQUEST_PERMISSIONS_ON_PULL = 4;
 
     public static GoogleDriveHelper driveHelper;
     public LocalFileHelper localHelper = new LocalFileHelper(this);
@@ -67,6 +72,42 @@ public class MainActivity extends AppCompatActivity {
     public static SharedPreferences settings;
 
     public static OperationType operationType = OperationType.NONE;
+
+    public Boolean checkPermissions(final Integer requestCode) {
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[] { Manifest.permission.READ_EXTERNAL_STORAGE },
+                    requestCode);
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == REQUEST_PERMISSIONS_ON_PUSH) {
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Access was given successfully", Toast.LENGTH_SHORT).show();
+                pushButton.callOnClick();
+            } else {
+                Toast.makeText(this, "App won't work without access", Toast.LENGTH_SHORT).show();
+            }
+        }
+        else if (requestCode == REQUEST_PERMISSIONS_ON_PULL) {
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Access was given successfully", Toast.LENGTH_SHORT).show();
+                pullButton.callOnClick();
+            } else {
+                Toast.makeText(this, "App won't work without access", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -98,6 +139,9 @@ public class MainActivity extends AppCompatActivity {
                 item.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_theme_night));
                 currentTheme = Theme.DAY;
             }
+
+            recreate();
+
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -151,6 +195,10 @@ public class MainActivity extends AppCompatActivity {
                 }
                 else if (pickedDir == null) {
                     throw msgHelper.getExceptionWithError("Local folder was not picked");
+                }
+
+                if (!checkPermissions(REQUEST_PERMISSIONS_ON_PUSH)) {
+                    return;
                 }
 
                 settings.edit().putString(DRIVE_DIRECTORY_URI_CACHE_NAME, driveFolderName).apply();
@@ -215,6 +263,10 @@ public class MainActivity extends AppCompatActivity {
                 }
                 else if (pickedDir == null) {
                     throw msgHelper.getExceptionWithError("Local folder was not picked");
+                }
+
+                if (!checkPermissions(REQUEST_PERMISSIONS_ON_PULL)) {
+                    return;
                 }
 
                 settings.edit().putString(DRIVE_DIRECTORY_URI_CACHE_NAME, driveFolderName).apply();

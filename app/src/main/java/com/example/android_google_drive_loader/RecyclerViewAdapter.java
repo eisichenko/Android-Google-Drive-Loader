@@ -25,7 +25,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        private TextView recyclerViewItemName;
+        private final TextView recyclerViewItemName;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
