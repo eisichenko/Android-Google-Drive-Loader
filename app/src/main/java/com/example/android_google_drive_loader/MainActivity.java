@@ -7,7 +7,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -74,10 +77,20 @@ public class MainActivity extends AppCompatActivity {
     public static OperationType operationType = OperationType.NONE;
 
     public Boolean checkPermissions(final Integer requestCode) {
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
+            Toast.makeText(this, "Please check all files permission to GD Loader", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+            startActivityForResult(Intent.createChooser(intent, "Check Settings"), requestCode);
+            return false;
+        }
+        else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R &&
+                (ContextCompat.checkSelfPermission( this, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+                        PackageManager.PERMISSION_GRANTED ||
+                        ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) !=
+                                PackageManager.PERMISSION_GRANTED)) {
             ActivityCompat.requestPermissions(this,
-                    new String[] { Manifest.permission.READ_EXTERNAL_STORAGE },
+                    new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            Manifest.permission.READ_EXTERNAL_STORAGE},
                     requestCode);
             return false;
         }
@@ -88,20 +101,42 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_PERMISSIONS_ON_PUSH) {
-            if (grantResults.length > 0
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (Environment.isExternalStorageManager()) {
+                    msgHelper.showToast("Access was given successfully");
+                    pushButton.callOnClick();
+                }
+                else {
+                    msgHelper.showToast("App won't work without access");
+                    return;
+                }
+            }
+            else if (grantResults.length > 0
                     && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "Access was given successfully", Toast.LENGTH_SHORT).show();
                 pushButton.callOnClick();
-            } else {
+            }
+            else {
                 Toast.makeText(this, "App won't work without access", Toast.LENGTH_SHORT).show();
             }
         }
         else if (requestCode == REQUEST_PERMISSIONS_ON_PULL) {
-            if (grantResults.length > 0
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (Environment.isExternalStorageManager()) {
+                    msgHelper.showToast("Access was given successfully");
+                    pullButton.callOnClick();
+                }
+                else {
+                    msgHelper.showToast("App won't work without access");
+                    return;
+                }
+            }
+            else if (grantResults.length > 0
                     && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "Access was given successfully", Toast.LENGTH_SHORT).show();
                 pullButton.callOnClick();
-            } else {
+            }
+            else {
                 Toast.makeText(this, "App won't work without access", Toast.LENGTH_SHORT).show();
             }
         }

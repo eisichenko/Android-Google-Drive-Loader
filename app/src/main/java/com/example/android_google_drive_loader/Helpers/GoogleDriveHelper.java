@@ -464,34 +464,6 @@ public class GoogleDriveHelper {
             final int totalSize = FetchHelper.getMapSize(downloadFromDriveFiles) + FetchHelper.getMapSize(deleteInLocalFiles);
             int currentCompleted = 0;
 
-            System.out.println("DOWNLOAD:");
-            System.out.println(downloadFromDriveFiles);
-
-            for (LocalFile folder : downloadFromDriveFiles.keySet()) {
-                for (DriveFile file : downloadFromDriveFiles.get(folder)) {
-                    String name = file.getName();
-                    activity.runOnUiThread(() -> {
-                        currentOperationNameTextView.setText("Downloading from drive");
-                        currentOperationFileNameTextView.setText(name);
-                    });
-
-                    if (downloadDriveFile(folder, file)) {
-                        System.out.println("DOWNLOAD: " + name + " OK");
-
-                        currentCompleted++;
-                        int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
-
-                        activity.runOnUiThread(() -> {
-                            loadingProgressBar.setProgress(percent);
-                            loadingStatusTextView.setText("Loading " + percent + "%");
-                        });
-                    }
-                    else {
-                        System.out.println("DOWNLOAD: " + name + " FAIL");
-                    }
-                }
-            }
-
             System.out.println("DELETE:");
             System.out.println(deleteInLocalFiles);
 
@@ -517,6 +489,34 @@ public class GoogleDriveHelper {
                     }
                     else {
                         System.out.println("DELETE: " + name + " FAIL");
+                    }
+                }
+            }
+
+            System.out.println("DOWNLOAD:");
+            System.out.println(downloadFromDriveFiles);
+
+            for (LocalFile folder : downloadFromDriveFiles.keySet()) {
+                for (DriveFile file : downloadFromDriveFiles.get(folder)) {
+                    String name = file.getName();
+                    activity.runOnUiThread(() -> {
+                        currentOperationNameTextView.setText("Downloading from drive");
+                        currentOperationFileNameTextView.setText(name);
+                    });
+
+                    if (downloadDriveFile(folder, file)) {
+                        System.out.println("DOWNLOAD: " + name + " OK");
+
+                        currentCompleted++;
+                        int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
+
+                        activity.runOnUiThread(() -> {
+                            loadingProgressBar.setProgress(percent);
+                            loadingStatusTextView.setText("Loading " + percent + "%");
+                        });
+                    }
+                    else {
+                        System.out.println("DOWNLOAD: " + name + " FAIL");
                     }
                 }
             }
