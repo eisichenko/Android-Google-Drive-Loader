@@ -50,13 +50,17 @@
         app:layout_constraintVertical_bias="0.06" />
 
     <TextView
+        android:id="@+id/driveFolderNameTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Drive folder name:"
-        android:textColor="?attr/blurred_text_color"
+        android:textAlignment="center"
+        android:text="Target drive folder: None"
+        android:textColor="?attr/main_text_color"
+        android:textSize="18sp"
+        android:padding="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.104"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.457" />
@@ -75,25 +79,6 @@
         app:layout_constraintStart_toStartOf="@+id/chosenFolderLabel"
         app:layout_constraintTop_toBottomOf="@+id/chosenFolderLabel"
         app:layout_constraintVertical_bias="0.024" />
-
-    <EditText
-        android:id="@+id/driveFolderEditText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:importantForAutofill="no"
-        android:textColor="?attr/main_text_color"
-        android:textColorHint="#898484"
-        android:hint="@string/edit_text_drive_folder_hint"
-        android:backgroundTint="#A210C6"
-        android:inputType="textPersonName"
-        android:minHeight="48dp"
-        app:layout_constraintBottom_toTopOf="@+id/pushButton"
-        app:layout_constraintEnd_toEndOf="@+id/chosenFolder"
-        app:layout_constraintHorizontal_bias="0.268"
-        app:layout_constraintStart_toStartOf="@+id/chosenFolder"
-        app:layout_constraintTop_toBottomOf="@+id/chosenFolder"
-        app:layout_constraintVertical_bias="0.693" />
 
     <Button
         android:id="@+id/chooseFolderBtn"

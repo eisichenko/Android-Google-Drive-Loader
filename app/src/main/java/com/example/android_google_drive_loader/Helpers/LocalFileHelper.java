@@ -18,7 +18,7 @@ import java.util.HashSet;
 
 public class LocalFileHelper {
 
-    private Context context;
+    private final Context context;
 
     public LocalFileHelper(Context context) {
         this.context = context;
@@ -79,6 +79,10 @@ public class LocalFileHelper {
     }
 
     public static String getAbsolutePathStringFromUri(Uri uri) {
+        if (uri.toString().startsWith("file:///")) {
+            return uri.getPath();
+        }
+
         ArrayList<String> strings = new ArrayList<>(Arrays.asList(uri.toString().split("/")));
 
         String pathString = Uri.decode(strings.get(strings.size() - 1));
@@ -92,7 +96,12 @@ public class LocalFileHelper {
             pathStrings.add(0, "/storage");
         }
 
-        return pathCombine(pathStrings);
+        String res = pathCombine(pathStrings);
+
+        if (!res.endsWith("/")) {
+            return res + "/";
+        }
+        return res;
     }
 
     public static String pathCombine(ArrayList<String> pathStrings) {

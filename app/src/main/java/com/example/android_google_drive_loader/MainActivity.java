@@ -63,13 +63,12 @@ public class MainActivity extends AppCompatActivity {
     public Button signInButton;
     public Button logoutButton;
     public TextView chosenFolderTextView;
-    public EditText driveFolderNameEditText;
     public TextView loadingTextView;
+    public TextView driveFolderNameTextView;
     public ProgressBar progressBar;
 
     public final String APP_PREFERENCES_NAME = "gd_loader_settings";
     public final String LOCAL_DIRECTORY_URI_CACHE_NAME = "LocalDirectory";
-    public final String DRIVE_DIRECTORY_URI_CACHE_NAME = "DriveDirectory";
     public static final String THEME_CACHE_NAME = "Theme";
 
     public static SharedPreferences settings;
@@ -207,7 +206,21 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         pushButton = findViewById(R.id.pushButton);
-        driveFolderNameEditText = findViewById(R.id.driveFolderEditText);
+        pullButton = findViewById(R.id.pullButton);
+        chooseButton = findViewById(R.id.chooseFolderBtn);
+        chosenFolderTextView = findViewById(R.id.chosenFolder);
+        driveFolderNameTextView = findViewById(R.id.driveFolderNameTextView);
+
+        String pickedDirUri = settings.getString(LOCAL_DIRECTORY_URI_CACHE_NAME, "");
+
+        if (pickedDirUri.length() > 0) {
+            pickedDir = DocumentFile.fromTreeUri(this, Uri.parse(pickedDirUri));
+            if (pickedDir != null && pickedDir.getName() != null) {
+                driveFolderName = pickedDir.getName();
+                chosenFolderTextView.setText(LocalFileHelper.getAbsolutePathStringFromUri(pickedDir.getUri()));
+                driveFolderNameTextView.setText(String.format("Target drive folder: %s", driveFolderName));
+            }
+        }
 
         progressBar = findViewById(R.id.progressBar);
         loadingTextView = findViewById(R.id.currentFetchOperationTextView);
@@ -223,20 +236,19 @@ public class MainActivity extends AppCompatActivity {
                     throw new Exception("ERROR: Please, sign in with google account");
                 }
 
-                driveFolderName = driveFolderNameEditText.getText().toString();
+                if (pickedDir == null || pickedDir.getName() == null) {
+                    throw msgHelper.getExceptionWithError("Local folder was not set");
+                }
+
+                driveFolderName = pickedDir.getName();
 
                 if (driveFolderName.length() == 0) {
                     throw msgHelper.getExceptionWithError("Empty drive folder name");
-                }
-                else if (pickedDir == null) {
-                    throw msgHelper.getExceptionWithError("Local folder was not picked");
                 }
 
                 if (!checkPermissions(REQUEST_PERMISSIONS_ON_PUSH)) {
                     return;
                 }
-
-                settings.edit().putString(DRIVE_DIRECTORY_URI_CACHE_NAME, driveFolderName).apply();
 
                 driveHelper.fetchData(this, pickedDir, driveFolderName).addOnSuccessListener(resFetchHelper -> {
 
@@ -282,7 +294,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        pullButton = findViewById(R.id.pullButton);
         pullButton.setOnClickListener(view -> {
             try {
                 GoogleSignInAccount currentAccount = GoogleSignIn.getLastSignedInAccount(getApplicationContext());
@@ -291,20 +302,19 @@ public class MainActivity extends AppCompatActivity {
                     throw new Exception("ERROR: Please, sign in with google account");
                 }
 
-                driveFolderName = driveFolderNameEditText.getText().toString();
+                if (pickedDir == null || pickedDir.getName() == null) {
+                    throw msgHelper.getExceptionWithError("Local folder was not set");
+                }
+
+                driveFolderName = pickedDir.getName();
 
                 if (driveFolderName.length() == 0) {
                     throw msgHelper.getExceptionWithError("Empty drive folder name");
-                }
-                else if (pickedDir == null) {
-                    throw msgHelper.getExceptionWithError("Local folder was not picked");
                 }
 
                 if (!checkPermissions(REQUEST_PERMISSIONS_ON_PULL)) {
                     return;
                 }
-
-                settings.edit().putString(DRIVE_DIRECTORY_URI_CACHE_NAME, driveFolderName).apply();
 
                 driveHelper.fetchData(this, pickedDir, driveFolderName).addOnSuccessListener(resFetchHelper -> {
 
@@ -350,29 +360,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        chooseButton = findViewById(R.id.chooseFolderBtn);
         chooseButton.setOnClickListener(view -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
             intent.addCategory(Intent.CATEGORY_DEFAULT);
             startActivityForResult(Intent.createChooser(intent, "Choose directory"), REQUEST_CODE_CHOOSE_FOLDER);
         });
-
-        chosenFolderTextView = findViewById(R.id.chosenFolder);
-
-        String pickedDirUri = settings.getString(LOCAL_DIRECTORY_URI_CACHE_NAME, "");
-
-        if (pickedDirUri.length() > 0) {
-            pickedDir = DocumentFile.fromTreeUri(getApplicationContext(), Uri.parse(pickedDirUri));
-            if (pickedDir != null) {
-                chosenFolderTextView.setText(LocalFileHelper.getAbsolutePathStringFromUri(pickedDir.getUri()));
-            }
-        }
-
-        String driveFolderName = settings.getString(DRIVE_DIRECTORY_URI_CACHE_NAME, "");
-
-        if (driveFolderName.length() > 0) {
-            driveFolderNameEditText.setText(driveFolderName);
-        }
 
         signInButton = findViewById(R.id.signInButton);
         signInButton.setOnClickListener(view -> {
@@ -443,7 +435,9 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case REQUEST_CODE_CHOOSE_FOLDER:
                     pickedDir = localHelper.getFileFromUri(resultData.getData());
+                    driveFolderName = pickedDir.getName();
                     chosenFolderTextView.setText(LocalFileHelper.getAbsolutePathStringFromUri(pickedDir.getUri()));
+                    driveFolderNameTextView.setText(String.format("Target drive folder: %s", driveFolderName));
 
                     settings.edit().putString(LOCAL_DIRECTORY_URI_CACHE_NAME, pickedDir.getUri().toString()).apply();
 
