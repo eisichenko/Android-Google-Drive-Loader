@@ -2,6 +2,7 @@ package com.example.android_google_drive_loader;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -16,7 +17,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
     public TextView loadingTextView;
     public TextView driveFolderNameTextView;
     public ProgressBar progressBar;
+    public TextView accountNameTextView;
 
     public final String APP_PREFERENCES_NAME = "gd_loader_settings";
     public final String LOCAL_DIRECTORY_URI_CACHE_NAME = "LocalDirectory";
@@ -179,6 +180,25 @@ public class MainActivity extends AppCompatActivity {
 
             return true;
         }
+        else if (item.getItemId() == R.id.aboutMenuItem) {
+            String versionName = "";
+            try {
+                versionName = getPackageManager()
+                        .getPackageInfo(getPackageName(), 0).versionName;
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+            }
+
+            new AlertDialog.Builder(this)
+                    .setTitle("About")
+                    .setMessage("• Written by Egor Isichenko, 2021\n\n" +
+                            String.format("• Version %s", versionName))
+                    .setPositiveButton("OK", (dialog, whichButton) -> {
+
+                    })
+                    .show();
+        }
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -211,6 +231,7 @@ public class MainActivity extends AppCompatActivity {
         chooseButton = findViewById(R.id.chooseFolderBtn);
         chosenFolderTextView = findViewById(R.id.chosenFolder);
         driveFolderNameTextView = findViewById(R.id.driveFolderNameTextView);
+        accountNameTextView = findViewById(R.id.accountNameTextView);
 
         String pickedDirUri = settings.getString(LOCAL_DIRECTORY_URI_CACHE_NAME, "");
 
@@ -389,6 +410,7 @@ public class MainActivity extends AppCompatActivity {
             else {
                 GoogleSignInClient googleSignInClient = buildGoogleSignInClient();
                 googleSignInClient.signOut().addOnSuccessListener(unused -> {
+                    accountNameTextView.setText("Current account: None");
                     Toast.makeText(getApplicationContext(),"Successfully logged out",Toast.LENGTH_LONG).show();
                 })
                 .addOnFailureListener(e -> {
@@ -410,6 +432,7 @@ public class MainActivity extends AppCompatActivity {
         }
         else {
             driveHelper = new GoogleDriveHelper(this, account, getResources().getString(R.string.app_name));
+            accountNameTextView.setText(String.format("Current account: %s", account.getEmail()));
         }
     }
 
@@ -453,6 +476,7 @@ public class MainActivity extends AppCompatActivity {
         GoogleSignIn.getSignedInAccountFromIntent(result)
                 .addOnSuccessListener(account -> {
                     driveHelper = new GoogleDriveHelper(getApplicationContext(), account, getResources().getString(R.string.app_name));
+                    accountNameTextView.setText(String.format("Current account: %s", account.getEmail()));
                     msgHelper.showToast("Sign up was successful");
                 })
                 .addOnFailureListener(e -> {

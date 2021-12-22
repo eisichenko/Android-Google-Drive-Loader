@@ -16,12 +16,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.android_google_drive_loader.Enums.DriveType;
 import com.example.android_google_drive_loader.Enums.OperationType;
-import com.example.android_google_drive_loader.Models.DriveFile;
-import com.example.android_google_drive_loader.Models.LocalFile;
 import com.example.android_google_drive_loader.Helpers.FetchHelper;
 import com.example.android_google_drive_loader.Helpers.SetOperationsHelper;
+import com.example.android_google_drive_loader.Helpers.SizeHelper;
+import com.example.android_google_drive_loader.Models.DriveFile;
+import com.example.android_google_drive_loader.Models.LocalFile;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,6 +32,7 @@ public class ConfirmPullActivity extends AppCompatActivity {
     private ArrayList<RecyclerViewItem> deleteInLocalRecyclerViewItemList;
     private RecyclerView downloadFromDriveRecyclerView;
     private RecyclerView deleteInLocalRecyclerView;
+    private TextView totalSizeTextView;
 
     public static HashMap<LocalFile, HashSet<DriveFile>> downloadFromDriveFiles;
     public static HashMap<LocalFile, HashSet<LocalFile>> deleteInLocalFiles;
@@ -41,6 +42,8 @@ public class ConfirmPullActivity extends AppCompatActivity {
     private TextView noneDownloadFromDriveTextView;
     private TextView noneDeleteInLocalTextView;
     private Button startPullButton;
+
+    public static long totalSizeInBytes = 0L;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +56,8 @@ public class ConfirmPullActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_confirm_pull);
+
+        totalSizeTextView = findViewById(R.id.totalSizeTextView);
 
         downloadFromDriveRecyclerView = findViewById(R.id.downloadFromDriveRecyclerView);
         downloadFromDriveRecyclerView.setFocusable(false);
@@ -185,6 +190,14 @@ public class ConfirmPullActivity extends AppCompatActivity {
                     deleteInLocalRecyclerViewItemList.add(new RecyclerViewItem(file.getName()));
                 }
             }
+
+            totalSizeInBytes = FetchHelper.getMapSizeInBytes(downloadFromDriveFiles) +
+                    FetchHelper.getMapSizeInBytes(deleteInLocalFiles) +
+                    FetchHelper.getMapSizeInBytes(createFolderAndDownloadFromDriveFiles) +
+                    FetchHelper.getMapSizeInBytes(deleteLocalFolderAndFiles);
+
+            totalSizeTextView.setText(String.format("Total size: %s",
+                    SizeHelper.convertToStringRepresentation(totalSizeInBytes)));
 
             setAdapter();
         }

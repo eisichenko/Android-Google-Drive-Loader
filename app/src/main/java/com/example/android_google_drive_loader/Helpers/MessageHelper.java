@@ -3,8 +3,6 @@ package com.example.android_google_drive_loader.Helpers;
 import android.content.Context;
 import android.widget.Toast;
 
-import java.util.Arrays;
-
 public class MessageHelper {
     private Context appContext;
 

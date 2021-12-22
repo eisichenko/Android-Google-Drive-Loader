@@ -52,4 +52,25 @@ public class FetchHelper {
         }
         return sum;
     }
+
+    public static <T extends AbstractFile, U extends AbstractFile> long getMapSizeInBytes(HashMap<T, HashSet<U>> m) {
+        long size = 0;
+
+        for (AbstractFile folder : m.keySet()) {
+            for (AbstractFile file : m.get(folder)) {
+                size += file.getSizeInBytes();
+            }
+        }
+        return size;
+    }
+
+    public static <T extends AbstractFile> long getFolderSize(HashSet<T> s) {
+        long size = 0L;
+
+        for (AbstractFile f : s) {
+            size += f.getSizeInBytes();
+        }
+
+        return size;
+    }
 }

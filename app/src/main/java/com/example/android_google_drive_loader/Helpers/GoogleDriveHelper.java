@@ -1,6 +1,5 @@
 package com.example.android_google_drive_loader.Helpers;
 
-import static com.example.android_google_drive_loader.MainActivity.currentTheme;
 import static com.example.android_google_drive_loader.MainActivity.msgHelper;
 
 import android.app.Activity;
@@ -12,23 +11,21 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.documentfile.provider.DocumentFile;
 
 import com.example.android_google_drive_loader.ConfirmPullActivity;
 import com.example.android_google_drive_loader.ConfirmPushActivity;
 import com.example.android_google_drive_loader.Enums.DriveType;
+import com.example.android_google_drive_loader.MainActivity;
 import com.example.android_google_drive_loader.Models.DriveFile;
 import com.example.android_google_drive_loader.Models.LocalFile;
-import com.example.android_google_drive_loader.MainActivity;
 import com.example.android_google_drive_loader.R;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
@@ -149,7 +146,7 @@ public class GoogleDriveHelper {
 
         Drive.Files.List request = drive.files().list()
                 .setPageSize(FILE_PAGE_SIZE)
-                .setFields("nextPageToken, files(id, name)")
+                .setFields("nextPageToken, files(id, name, size)")
                 .setQ(query);
 
         HashSet<DriveFile> res = new HashSet<>();
@@ -505,6 +502,16 @@ public class GoogleDriveHelper {
 
             HashMap<DriveFile, HashSet<DriveFile>> deleteDriveFolderAndFiles = ConfirmPushActivity.deleteDriveFolderAndFiles;
 
+            long totalSizeInBytes = ConfirmPushActivity.totalSizeInBytes;
+            long finalTotalSizeInBytes1 = totalSizeInBytes;
+            activity.runOnUiThread(() -> {
+                loadingStatusTextView.setText(String.format("Loading %d%%\n(%s to process)",
+                        0,
+                        SizeHelper.convertToStringRepresentation(finalTotalSizeInBytes1)));
+            });
+
+            System.out.println("INITIAL TOTAL SIZE IN BYTES " + totalSizeInBytes);
+
             final int totalSize = FetchHelper.getMapSize(deleteOnDriveFiles) +
                     FetchHelper.getMapSize(uploadToDriveFiles) +
                     FetchHelper.getMapSize(createFolderAndUploadToDriveFiles) +
@@ -528,9 +535,14 @@ public class GoogleDriveHelper {
                         currentCompleted++;
                         int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
 
+                        totalSizeInBytes -= file.getSizeInBytes();
+
+                        long finalTotalSizeInBytes = totalSizeInBytes;
                         activity.runOnUiThread(() -> {
                             loadingProgressBar.setProgress(percent);
-                            loadingStatusTextView.setText("Loading " + percent + "%");
+                            loadingStatusTextView.setText(String.format("Loading %d%%\n(%s to process)",
+                                    percent,
+                                    SizeHelper.convertToStringRepresentation(finalTotalSizeInBytes)));
                         });
                     }
                     else {
@@ -552,9 +564,14 @@ public class GoogleDriveHelper {
                 currentCompleted += deleteDriveFolderAndFiles.get(driveFolder).size();
                 int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
 
+                totalSizeInBytes -= FetchHelper.getFolderSize(deleteDriveFolderAndFiles.get(driveFolder));
+
+                long finalTotalSizeInBytes = totalSizeInBytes;
                 activity.runOnUiThread(() -> {
                     loadingProgressBar.setProgress(percent);
-                    loadingStatusTextView.setText("Loading " + percent + "%");
+                    loadingStatusTextView.setText(String.format("Loading %d%%\n(%s to process)",
+                            percent,
+                            SizeHelper.convertToStringRepresentation(finalTotalSizeInBytes)));
                 });
             }
 
@@ -574,9 +591,14 @@ public class GoogleDriveHelper {
                         currentCompleted++;
                         int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
 
+                        totalSizeInBytes -= file.getSizeInBytes();
+
+                        long finalTotalSizeInBytes = totalSizeInBytes;
                         activity.runOnUiThread(() -> {
                             loadingProgressBar.setProgress(percent);
-                            loadingStatusTextView.setText("Loading " + percent + "%");
+                            loadingStatusTextView.setText(String.format("Loading %d%%\n(%s to process)",
+                                    percent,
+                                    SizeHelper.convertToStringRepresentation(finalTotalSizeInBytes)));
                         });
                     }
                     else {
@@ -617,9 +639,14 @@ public class GoogleDriveHelper {
                         currentCompleted++;
                         int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
 
+                        totalSizeInBytes -= localFile.getSizeInBytes();
+
+                        long finalTotalSizeInBytes = totalSizeInBytes;
                         activity.runOnUiThread(() -> {
                             loadingProgressBar.setProgress(percent);
-                            loadingStatusTextView.setText("Loading " + percent + "%");
+                            loadingStatusTextView.setText(String.format("Loading %d%%\n(%s to process)",
+                                    percent,
+                                    SizeHelper.convertToStringRepresentation(finalTotalSizeInBytes)));
                         });
                     }
                     else {
@@ -675,6 +702,14 @@ public class GoogleDriveHelper {
 
             HashMap<LocalFile, HashSet<LocalFile>> deleteLocalFolderAndFiles = ConfirmPullActivity.deleteLocalFolderAndFiles;
 
+            long totalSizeInBytes = ConfirmPullActivity.totalSizeInBytes;
+            long finalTotalSizeInBytes1 = totalSizeInBytes;
+            activity.runOnUiThread(() -> {
+                loadingStatusTextView.setText(String.format("Loading %d%%\n(%s to process)",
+                        0,
+                        SizeHelper.convertToStringRepresentation(finalTotalSizeInBytes1)));
+            });
+
             final int totalSize = FetchHelper.getMapSize(downloadFromDriveFiles) +
                     FetchHelper.getMapSize(deleteInLocalFiles) +
                     FetchHelper.getMapSize(createFolderAndDownloadFromDriveFiles) +
@@ -700,9 +735,15 @@ public class GoogleDriveHelper {
                         currentCompleted++;
                         int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
 
+                        totalSizeInBytes -= file.getSizeInBytes();
+                        System.out.println(totalSizeInBytes);
+
+                        long finalTotalSizeInBytes = totalSizeInBytes;
                         activity.runOnUiThread(() -> {
                             loadingProgressBar.setProgress(percent);
-                            loadingStatusTextView.setText("Loading " + percent + "%");
+                            loadingStatusTextView.setText(String.format("Loading %d%%\n(%s to process)",
+                                    percent,
+                                    SizeHelper.convertToStringRepresentation(finalTotalSizeInBytes)));
                         });
                     }
                     else {
@@ -726,9 +767,14 @@ public class GoogleDriveHelper {
                 currentCompleted += deleteLocalFolderAndFiles.get(folder).size();
                 int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
 
+                totalSizeInBytes -= FetchHelper.getFolderSize(deleteLocalFolderAndFiles.get(folder));
+
+                long finalTotalSizeInBytes = totalSizeInBytes;
                 activity.runOnUiThread(() -> {
                     loadingProgressBar.setProgress(percent);
-                    loadingStatusTextView.setText("Loading " + percent + "%");
+                    loadingStatusTextView.setText(String.format("Loading %d%%\n(%s to process)",
+                            percent,
+                            SizeHelper.convertToStringRepresentation(finalTotalSizeInBytes)));
                 });
             }
 
@@ -749,9 +795,14 @@ public class GoogleDriveHelper {
                         currentCompleted++;
                         int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
 
+                        totalSizeInBytes -= file.getSizeInBytes();
+
+                        long finalTotalSizeInBytes = totalSizeInBytes;
                         activity.runOnUiThread(() -> {
                             loadingProgressBar.setProgress(percent);
-                            loadingStatusTextView.setText("Loading " + percent + "%");
+                            loadingStatusTextView.setText(String.format("Loading %d%%\n(%s to process)",
+                                    percent,
+                                    SizeHelper.convertToStringRepresentation(finalTotalSizeInBytes)));
                         });
                     }
                     else {
@@ -792,9 +843,14 @@ public class GoogleDriveHelper {
                         currentCompleted++;
                         int percent = Math.round((float)Math.ceil((float)currentCompleted / totalSize * 100));
 
+                        totalSizeInBytes -= file.getSizeInBytes();
+
+                        long finalTotalSizeInBytes = totalSizeInBytes;
                         activity.runOnUiThread(() -> {
                             loadingProgressBar.setProgress(percent);
-                            loadingStatusTextView.setText("Loading " + percent + "%");
+                            loadingStatusTextView.setText(String.format("Loading %d%%\n(%s to process)",
+                                    percent,
+                                    SizeHelper.convertToStringRepresentation(finalTotalSizeInBytes)));
                         });
                     }
                     else {

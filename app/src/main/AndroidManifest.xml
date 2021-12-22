@@ -22,21 +22,21 @@
         <activity
             android:name=".FinishJobActivity"
             android:screenOrientation="portrait"
-            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="true"
             tools:ignore="LockedOrientationActivity" />
         <activity
             android:name=".ConfirmPullActivity"
+            android:screenOrientation="portrait"
             android:exported="true"
             android:parentActivityName=".MainActivity" />
         <activity
             android:name=".ConfirmPushActivity"
+            android:screenOrientation="portrait"
             android:exported="true"
             android:parentActivityName=".MainActivity" />
         <activity
             android:name=".MainActivity"
             android:screenOrientation="portrait"
-            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="true"
             tools:ignore="LockedOrientationActivity" />
 

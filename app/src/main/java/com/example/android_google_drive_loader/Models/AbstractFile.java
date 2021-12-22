@@ -5,6 +5,8 @@ import androidx.annotation.NonNull;
 public abstract class AbstractFile {
     public abstract String getAbsolutePath();
 
+    public abstract long getSizeInBytes();
+
     @Override
     public boolean equals(Object obj) {
         if (obj == this) {

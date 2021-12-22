@@ -16,10 +16,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.android_google_drive_loader.Enums.DriveType;
 import com.example.android_google_drive_loader.Enums.OperationType;
-import com.example.android_google_drive_loader.Models.DriveFile;
-import com.example.android_google_drive_loader.Models.LocalFile;
 import com.example.android_google_drive_loader.Helpers.FetchHelper;
 import com.example.android_google_drive_loader.Helpers.SetOperationsHelper;
+import com.example.android_google_drive_loader.Helpers.SizeHelper;
+import com.example.android_google_drive_loader.Models.DriveFile;
+import com.example.android_google_drive_loader.Models.LocalFile;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,6 +32,7 @@ public class ConfirmPushActivity extends AppCompatActivity {
     private ArrayList<RecyclerViewItem> deleteOnDriveRecyclerViewItemList;
     private RecyclerView uploadToDriveRecyclerView;
     private RecyclerView deleteOnDriveRecyclerView;
+    private TextView totalSizeTextView;
 
     public static HashMap<DriveFile, HashSet<LocalFile>> uploadToDriveFiles;
     public static HashMap<DriveFile, HashSet<DriveFile>> deleteOnDriveFiles;
@@ -40,6 +42,8 @@ public class ConfirmPushActivity extends AppCompatActivity {
     private TextView noneUploadDriveTextView;
     private TextView noneDeleteDriveTextView;
     private Button startPushButton;
+
+    public static long totalSizeInBytes = 0L;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +56,8 @@ public class ConfirmPushActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_confirm_push);
+
+        totalSizeTextView = findViewById(R.id.totalSizeTextView);
 
         uploadToDriveRecyclerView = findViewById(R.id.uploadFromDriveRecyclerView);
         uploadToDriveRecyclerView.setFocusable(false);
@@ -143,7 +149,10 @@ public class ConfirmPushActivity extends AppCompatActivity {
                 }
                 uploadToDriveRecyclerViewItemList.add(new RecyclerViewItem(String.format("FOLDER: %s", folder.getAbsolutePath()), DriveType.FOLDER));
                 for (LocalFile file : uploadToDriveFiles.get(folder)) {
-                    uploadToDriveRecyclerViewItemList.add(new RecyclerViewItem(file.getName()));
+                    uploadToDriveRecyclerViewItemList.add(new RecyclerViewItem(String.format("%s (%s)",
+                            file.getName(),
+                            SizeHelper.convertToStringRepresentation(file.getSizeInBytes()))
+                    ));
                 }
             }
 
@@ -153,7 +162,10 @@ public class ConfirmPushActivity extends AppCompatActivity {
                 System.out.println(String.format("[CREATE] %s", localFolder.getAbsolutePath()));
                 for (LocalFile localFile : createFolderAndUploadToDriveFiles.get(localFolder)) {
                     System.out.println("UPLOAD WITH FOLDER " + localFile.getName());
-                    uploadToDriveRecyclerViewItemList.add(new RecyclerViewItem(localFile.getName()));
+                    uploadToDriveRecyclerViewItemList.add(new RecyclerViewItem(String.format("%s (%s)",
+                            localFile.getName(),
+                            SizeHelper.convertToStringRepresentation(localFile.getSizeInBytes())
+                    )));
                 }
             }
 
@@ -163,7 +175,9 @@ public class ConfirmPushActivity extends AppCompatActivity {
                 }
                 deleteOnDriveRecyclerViewItemList.add(new RecyclerViewItem(String.format("FOLDER: %s", folder.getAbsolutePath()), DriveType.FOLDER));
                 for (DriveFile file : deleteOnDriveFiles.get(folder)) {
-                    deleteOnDriveRecyclerViewItemList.add(new RecyclerViewItem(file.getName()));
+                    deleteOnDriveRecyclerViewItemList.add(new RecyclerViewItem(String.format("%s (%s)",
+                            file.getName(),
+                            SizeHelper.convertToStringRepresentation(file.getSizeInBytes()))));
                 }
             }
 
@@ -171,9 +185,19 @@ public class ConfirmPushActivity extends AppCompatActivity {
                 deleteDriveFolderAndFiles.put(driveFolder, driveFolderFiles.get(driveFolder));
                 deleteOnDriveRecyclerViewItemList.add(new RecyclerViewItem(String.format("FOLDER: %s", driveFolder.getAbsolutePath()), DriveType.FOLDER));
                 for (DriveFile file : deleteDriveFolderAndFiles.get(driveFolder)) {
-                    deleteOnDriveRecyclerViewItemList.add(new RecyclerViewItem(file.getName()));
+                    deleteOnDriveRecyclerViewItemList.add(new RecyclerViewItem(String.format("%s (%s)",
+                            file.getName(),
+                            SizeHelper.convertToStringRepresentation(file.getSizeInBytes()))));
                 }
             }
+
+            totalSizeInBytes = FetchHelper.getMapSizeInBytes(uploadToDriveFiles) +
+                    FetchHelper.getMapSizeInBytes(deleteOnDriveFiles) +
+                    FetchHelper.getMapSizeInBytes(createFolderAndUploadToDriveFiles) +
+                    FetchHelper.getMapSizeInBytes(deleteDriveFolderAndFiles);
+
+            totalSizeTextView.setText(String.format("Total size: %s",
+                    SizeHelper.convertToStringRepresentation(totalSizeInBytes)));
 
             setAdapter();
         }

@@ -1,6 +1,5 @@
 package com.example.android_google_drive_loader.Models;
 
-import androidx.annotation.NonNull;
 import androidx.documentfile.provider.DocumentFile;
 
 import com.example.android_google_drive_loader.Helpers.PathHelper;
@@ -10,11 +9,13 @@ public class LocalFile extends AbstractFile{
     private DocumentFile documentFile;
     private String absolutePath;
     private LocalFile parent;
+    private long size;
 
     public LocalFile(DocumentFile file, LocalFile parent) {
         name = file.getName();
         this.documentFile = file;
         this.parent = parent;
+        this.size = file.length();
 
         if (this.parent == null) {
             this.absolutePath = file.getName();
@@ -22,6 +23,11 @@ public class LocalFile extends AbstractFile{
         else {
             this.absolutePath = PathHelper.pathCombine(parent.getAbsolutePath(), file.getName());
         }
+    }
+
+    @Override
+    public long getSizeInBytes() {
+        return size;
     }
 
     public LocalFile getParent() {

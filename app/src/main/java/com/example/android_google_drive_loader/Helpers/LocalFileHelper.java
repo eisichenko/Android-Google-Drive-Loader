@@ -3,16 +3,13 @@ package com.example.android_google_drive_loader.Helpers;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Environment;
 
 import androidx.documentfile.provider.DocumentFile;
 
-import com.example.android_google_drive_loader.Models.LocalFile;
 import com.example.android_google_drive_loader.MainActivity;
+import com.example.android_google_drive_loader.Models.LocalFile;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 
 

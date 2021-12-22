@@ -66,6 +66,22 @@
         app:layout_constraintVertical_bias="0.457" />
 
     <TextView
+        android:id="@+id/accountNameTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:text="Current account: None"
+        android:textAlignment="center"
+        android:textColor="?attr/main_text_color"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.502"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.521" />
+
+    <TextView
         android:id="@+id/chosenFolder"
         android:layout_width="178dp"
         android:layout_height="173dp"
