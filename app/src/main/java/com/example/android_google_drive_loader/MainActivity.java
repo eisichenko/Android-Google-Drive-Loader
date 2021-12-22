@@ -35,6 +35,7 @@ import com.example.android_google_drive_loader.Helpers.FetchHelper;
 import com.example.android_google_drive_loader.Helpers.GoogleDriveHelper;
 import com.example.android_google_drive_loader.Helpers.LocalFileHelper;
 import com.example.android_google_drive_loader.Helpers.MessageHelper;
+import com.example.android_google_drive_loader.Helpers.PathHelper;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -183,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        msgHelper = new MessageHelper(getApplicationContext());
+        msgHelper = new MessageHelper(this);
 
         settings = getSharedPreferences(APP_PREFERENCES_NAME, Context.MODE_PRIVATE);
 
@@ -217,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
             pickedDir = DocumentFile.fromTreeUri(this, Uri.parse(pickedDirUri));
             if (pickedDir != null && pickedDir.getName() != null) {
                 driveFolderName = pickedDir.getName();
-                chosenFolderTextView.setText(LocalFileHelper.getAbsolutePathStringFromUri(pickedDir.getUri()));
+                chosenFolderTextView.setText(PathHelper.getAbsolutePathStringFromUri(pickedDir.getUri()));
                 driveFolderNameTextView.setText(String.format("Target drive folder: %s", driveFolderName));
             }
         }
@@ -402,13 +403,13 @@ public class MainActivity extends AppCompatActivity {
     public void onStart() {
         super.onStart();
 
-        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(getApplicationContext());
+        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
 
         if (account == null) {
             signIn();
         }
         else {
-            driveHelper = new GoogleDriveHelper(getApplicationContext(), account, getResources().getString(R.string.app_name));
+            driveHelper = new GoogleDriveHelper(this, account, getResources().getString(R.string.app_name));
         }
     }
 
@@ -436,7 +437,7 @@ public class MainActivity extends AppCompatActivity {
                 case REQUEST_CODE_CHOOSE_FOLDER:
                     pickedDir = localHelper.getFileFromUri(resultData.getData());
                     driveFolderName = pickedDir.getName();
-                    chosenFolderTextView.setText(LocalFileHelper.getAbsolutePathStringFromUri(pickedDir.getUri()));
+                    chosenFolderTextView.setText(PathHelper.getAbsolutePathStringFromUri(pickedDir.getUri()));
                     driveFolderNameTextView.setText(String.format("Target drive folder: %s", driveFolderName));
 
                     settings.edit().putString(LOCAL_DIRECTORY_URI_CACHE_NAME, pickedDir.getUri().toString()).apply();

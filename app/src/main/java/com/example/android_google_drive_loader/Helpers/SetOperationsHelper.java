@@ -1,6 +1,6 @@
 package com.example.android_google_drive_loader.Helpers;
 
-import com.example.android_google_drive_loader.Files.AbstractFile;
+import com.example.android_google_drive_loader.Models.AbstractFile;
 
 import java.util.HashSet;
 
@@ -16,4 +16,5 @@ public class SetOperationsHelper {
 
         return res;
     }
+
 }

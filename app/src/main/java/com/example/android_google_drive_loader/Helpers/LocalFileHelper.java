@@ -7,7 +7,7 @@ import android.os.Environment;
 
 import androidx.documentfile.provider.DocumentFile;
 
-import com.example.android_google_drive_loader.Files.LocalFile;
+import com.example.android_google_drive_loader.Models.LocalFile;
 import com.example.android_google_drive_loader.MainActivity;
 
 import java.io.File;
@@ -31,23 +31,29 @@ public class LocalFileHelper {
         return result;
     }
 
-    public static HashSet<LocalFile> getNestedFolders(DocumentFile folder) throws Exception {
+    public static HashSet<LocalFile> getNestedFolders(DocumentFile folder, LocalFile parent) throws Exception {
         if (!folder.isDirectory()) {
             throw MainActivity.msgHelper.getExceptionWithError("File is not directory");
         }
+
+        LocalFile rootFile = new LocalFile(folder, parent);
 
         DocumentFile[] files = folder.listFiles();
 
         HashSet<LocalFile> res = new HashSet<>();
 
+        if (parent == null) {
+            res.add(rootFile);
+        }
+
         for (DocumentFile file : files) {
             if (file.isDirectory()) {
-                LocalFile localFile = new LocalFile(file);
+                LocalFile localFile = new LocalFile(file, rootFile);
                 if (res.contains(localFile)) {
                     throw MainActivity.msgHelper.getExceptionWithError("Duplicate local folders in " + folder.getName());
                 }
                 res.add(localFile);
-                res.addAll(getNestedFolders(file));
+                res.addAll(getNestedFolders(file, rootFile));
             }
         }
 
@@ -67,7 +73,7 @@ public class LocalFileHelper {
 
         for (DocumentFile file : files) {
             if (!file.isDirectory()) {
-                res.add(new LocalFile(file));
+                res.add(new LocalFile(file, localFile));
             }
         }
 
@@ -75,50 +81,7 @@ public class LocalFileHelper {
     }
 
     public static File getFileFromDocumentFile(DocumentFile file) {
-        return new File(getAbsolutePathStringFromUri(file.getUri()));
+        return new File(PathHelper.getAbsolutePathStringFromUri(file.getUri()));
     }
 
-    public static String getAbsolutePathStringFromUri(Uri uri) {
-        if (uri.toString().startsWith("file:///")) {
-            return uri.getPath();
-        }
-
-        ArrayList<String> strings = new ArrayList<>(Arrays.asList(uri.toString().split("/")));
-
-        String pathString = Uri.decode(strings.get(strings.size() - 1));
-
-        ArrayList<String> pathStrings = new ArrayList<>(Arrays.asList(pathString.split(":")));
-
-        if (pathStrings.get(0).equals("primary")) {
-            pathStrings.set(0, Environment.getExternalStorageDirectory().getPath());
-        }
-        else {
-            pathStrings.add(0, "/storage");
-        }
-
-        String res = pathCombine(pathStrings);
-
-        if (!res.endsWith("/")) {
-            return res + "/";
-        }
-        return res;
-    }
-
-    public static String pathCombine(ArrayList<String> pathStrings) {
-        StringBuilder res = new StringBuilder();
-
-        for (String str : pathStrings) {
-            if (res.length() == 0) {
-                res.append(str);
-            }
-            else if (res.charAt(res.length() - 1) == '/') {
-                res.append(str);
-            }
-            else {
-                res.append('/').append(str);
-            }
-        }
-
-        return res.toString();
-    }
 }

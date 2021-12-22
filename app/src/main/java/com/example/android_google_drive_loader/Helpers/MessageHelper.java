@@ -3,6 +3,8 @@ package com.example.android_google_drive_loader.Helpers;
 import android.content.Context;
 import android.widget.Toast;
 
+import java.util.Arrays;
+
 public class MessageHelper {
     private Context appContext;
 
@@ -11,11 +13,10 @@ public class MessageHelper {
     }
 
     public void showToast(String msg) {
-        Toast.makeText(appContext, msg, Toast.LENGTH_SHORT).show();
+        Toast.makeText(appContext, msg, Toast.LENGTH_LONG).show();
     }
 
     public Exception getExceptionWithError(String msg) {
         return new Exception("ERROR: " + msg);
     }
-
 }
