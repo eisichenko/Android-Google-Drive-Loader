@@ -28,53 +28,31 @@ public class LocalFileHelper {
         return result;
     }
 
-    public static HashSet<LocalFile> getNestedFolders(DocumentFile folder, LocalFile parent) throws Exception {
-        if (!folder.isDirectory()) {
+    public HashSet<LocalFile> getLocalFilesAndFolders(LocalFile rootFolder, LocalFile parent) throws Exception {
+        if (!rootFolder.getFile().isDirectory()) {
             throw MainActivity.msgHelper.getExceptionWithError("File is not directory");
         }
 
-        LocalFile rootFile = new LocalFile(folder, parent);
+        DocumentFile[] files = rootFolder.getFile().listFiles();
 
-        DocumentFile[] files = folder.listFiles();
-
-        HashSet<LocalFile> res = new HashSet<>();
+        HashSet<LocalFile> localFolders = new HashSet<>();
 
         if (parent == null) {
-            res.add(rootFile);
+            localFolders.add(rootFolder);
         }
 
         for (DocumentFile file : files) {
+            LocalFile localFile = new LocalFile(file, rootFolder);
             if (file.isDirectory()) {
-                LocalFile localFile = new LocalFile(file, rootFile);
-                if (res.contains(localFile)) {
-                    throw MainActivity.msgHelper.getExceptionWithError("Duplicate local folders in " + folder.getName());
+                if (localFolders.contains(localFile)) {
+                    throw MainActivity.msgHelper.getExceptionWithError("Duplicate local folders " + localFile.getAbsolutePath());
                 }
-                res.add(localFile);
-                res.addAll(getNestedFolders(file, rootFile));
+                localFolders.add(localFile);
+                localFolders.addAll(getLocalFilesAndFolders(localFile, rootFolder));
             }
         }
 
-        return res;
-    }
-
-    public HashSet<LocalFile> getFolderFiles(LocalFile localFile) throws Exception {
-        DocumentFile directory = localFile.getFile();
-
-        if (!directory.isDirectory()) {
-            throw MainActivity.msgHelper.getExceptionWithError("File is not directory");
-        }
-
-        DocumentFile[] files = directory.listFiles();
-
-        HashSet<LocalFile> res = new HashSet<>();
-
-        for (DocumentFile file : files) {
-            if (!file.isDirectory()) {
-                res.add(new LocalFile(file, localFile));
-            }
-        }
-
-        return res;
+        return localFolders;
     }
 
     public static File getFileFromDocumentFile(DocumentFile file) {

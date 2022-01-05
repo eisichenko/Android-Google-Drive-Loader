@@ -3,6 +3,7 @@ package com.example.android_google_drive_loader.Helpers;
 import com.example.android_google_drive_loader.Models.AbstractFile;
 import com.example.android_google_drive_loader.Models.DriveFile;
 import com.example.android_google_drive_loader.Models.LocalFile;
+import com.google.api.services.drive.Drive;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,15 +14,29 @@ public class FetchHelper {
     private HashMap<LocalFile, HashSet<LocalFile>> localFolderFiles;
     private HashSet<DriveFile> driveFolders;
     private HashSet<LocalFile> localFolders;
+    private DriveFile driveRootFolder;
+    private LocalFile localRootFolder;
 
     public FetchHelper(HashMap<DriveFile, HashSet<DriveFile>> driveFolderFiles,
                        HashMap<LocalFile, HashSet<LocalFile>> localFolderFiles,
                        HashSet<DriveFile> driveFolders,
-                       HashSet<LocalFile> localFolders) {
+                       HashSet<LocalFile> localFolders,
+                       DriveFile driveRootFolder,
+                       LocalFile localRootFolder) {
         this.driveFolderFiles = driveFolderFiles;
         this.localFolderFiles = localFolderFiles;
         this.driveFolders = driveFolders;
         this.localFolders = localFolders;
+        this.driveRootFolder = driveRootFolder;
+        this.localRootFolder = localRootFolder;
+    }
+
+    public DriveFile getDriveRootFolder() {
+        return driveRootFolder;
+    }
+
+    public LocalFile getLocalRootFolder() {
+        return localRootFolder;
     }
 
     public HashSet<DriveFile> getDriveFolders() {

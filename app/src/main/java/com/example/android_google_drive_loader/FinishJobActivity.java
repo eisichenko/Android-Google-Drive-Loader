@@ -41,7 +41,9 @@ public class FinishJobActivity extends AppCompatActivity {
 
         if (savedInstanceState == null) {
             if (MainActivity.operationType == OperationType.PUSH) {
-                MainActivity.driveHelper.push(this, MainActivity.pickedDir, MainActivity.driveFolderName)
+                MainActivity.driveHelper.push(this,
+                        MainActivity.fetchHelper.getLocalRootFolder(),
+                        MainActivity.fetchHelper.getDriveRootFolder())
                         .addOnSuccessListener(isTestPassed -> {
                             if (isTestPassed) {
                                 MainActivity.msgHelper.showToast("SUCCESS");
@@ -64,7 +66,9 @@ public class FinishJobActivity extends AppCompatActivity {
                         });
             }
             else if (MainActivity.operationType == OperationType.PULL) {
-                MainActivity.driveHelper.pull(this, MainActivity.pickedDir, MainActivity.driveFolderName)
+                MainActivity.driveHelper.pull(this,
+                        MainActivity.fetchHelper.getLocalRootFolder(),
+                        MainActivity.fetchHelper.getDriveRootFolder())
                         .addOnSuccessListener(isTestPassed -> {
                             if (isTestPassed) {
                                 MainActivity.msgHelper.showToast("SUCCESS");

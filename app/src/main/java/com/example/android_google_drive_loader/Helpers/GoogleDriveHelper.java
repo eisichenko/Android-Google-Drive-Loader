@@ -56,7 +56,7 @@ public class GoogleDriveHelper {
     private final Context appContext;
 
     public static String SCOPE = DriveScopes.DRIVE;
-    private final int FILE_PAGE_SIZE = 100;
+    private final int FILE_PAGE_SIZE = 1000;
 
     public static String invalidCharacters = "/\\:*?<>\"";
 
@@ -141,69 +141,26 @@ public class GoogleDriveHelper {
         return files.get(0);
     }
 
-    public HashSet<DriveFile> getFolderFiles(DriveFile folderFile) throws Exception {
-        String query = "'" + folderFile.getId() + "' in parents and mimeType != '" + GOOGLE_DRIVE_FOLDER_TYPE + "' and trashed = false";
-
-        Drive.Files.List request = drive.files().list()
-                .setPageSize(FILE_PAGE_SIZE)
-                .setFields("nextPageToken, files(id, name, size)")
-                .setQ(query);
-
-        HashSet<DriveFile> res = new HashSet<>();
-
-        do {
-            FileList files = request.execute();
-
-            for (File curFile : files.getFiles()) {
-                DriveFile driveFile = new DriveFile(curFile, folderFile);
-
-                if (res.contains(driveFile)) {
-                    throw MainActivity.msgHelper.getExceptionWithError("Duplicate files in folder " + folderFile.getName());
-                }
-
-                if (!isValidName(driveFile.getName())) {
-                    throw MainActivity.msgHelper.getExceptionWithError(String.format("Invalid file name %s\n Invalid characters %s",
-                            driveFile.getName(),
-                            invalidCharacters));
-                }
-
-                res.add(driveFile);
-            }
-
-            request.setPageToken(files.getNextPageToken());
-        }
-        while (request.getPageToken() != null && request.getPageToken().length() > 0);
-
-        return res;
-    }
-
-    public HashSet<DriveFile> getNestedFolders(File folderFile, DriveFile parent) throws Exception {
-        DriveFile rootFile = new DriveFile(folderFile, parent);
-
+    public HashSet<DriveFile> getDriveFoldersAndFiles(DriveFile rootFile, DriveFile parent) throws Exception {
         if (!isValidName(rootFile.getName())) {
             throw msgHelper.getExceptionWithError(String.format("Invalid folder name %s", rootFile.getAbsolutePath()));
         }
 
-        String query = "'" + folderFile.getId() + "' in parents and mimeType = '" + GOOGLE_DRIVE_FOLDER_TYPE + "' and trashed = false";
+        String query = "'" + rootFile.getId() + "' in parents and trashed = false";
 
         Drive.Files.List request = drive.files().list()
                 .setPageSize(FILE_PAGE_SIZE)
-                .setFields("nextPageToken, files(id, name)")
+                .setFields("nextPageToken, files(id, name, size, mimeType)")
                 .setQ(query);
 
-        HashSet<File> resultSet = new HashSet<>();
+        HashSet<File> foldersAndFilesResponseSet = new HashSet<>();
 
         do {
-            FileList nestedFolders = request.execute();
+            FileList foldersAndFiles = request.execute();
 
-            for (File curFolder : nestedFolders.getFiles()) {
-                if (resultSet.contains(curFolder)) {
-                    throw MainActivity.msgHelper.getExceptionWithError("Duplicate folders in folder " + folderFile.getName());
-                }
-                resultSet.add(curFolder);
-            }
+            foldersAndFilesResponseSet.addAll(foldersAndFiles.getFiles());
 
-            request.setPageToken(nestedFolders.getNextPageToken());
+            request.setPageToken(foldersAndFiles.getNextPageToken());
         }
         while (request.getPageToken() != null && request.getPageToken().length() > 0);
 
@@ -213,21 +170,30 @@ public class GoogleDriveHelper {
             folderSet.add(rootFile);
         }
 
-        for (File folder : resultSet) {
-            DriveFile driveFile = new DriveFile(folder, rootFile);
+        for (File file : foldersAndFilesResponseSet) {
+            DriveFile driveFile = new DriveFile(file, rootFile);
 
-            if (folderSet.contains(driveFile)) {
-                throw MainActivity.msgHelper.getExceptionWithError("Duplicate folders in folder " + folderFile.getName());
+            if (file.getMimeType().equals(GOOGLE_DRIVE_FOLDER_TYPE)) {
+                if (folderSet.contains(driveFile)) {
+                    throw MainActivity.msgHelper.getExceptionWithError("Duplicate folders " + driveFile.getAbsolutePath());
+                }
+
+                if (!isValidName(driveFile.getName())) {
+                    throw msgHelper.getExceptionWithError(String.format("Invalid drive folder name %s\nInvalid characters %s",
+                            driveFile.getAbsolutePath(),
+                            invalidCharacters));
+                }
+
+                folderSet.add(driveFile);
+                folderSet.addAll(getDriveFoldersAndFiles(driveFile, rootFile));
             }
-
-            if (!isValidName(driveFile.getName())) {
-                throw msgHelper.getExceptionWithError(String.format("Invalid folder name %s\nInvalid characters %s",
-                        driveFile.getAbsolutePath(),
-                        invalidCharacters));
+            else {
+                if (!isValidName(driveFile.getName())) {
+                    throw msgHelper.getExceptionWithError(String.format("Invalid drive file name %s\nInvalid characters %s",
+                            driveFile.getAbsolutePath(),
+                            invalidCharacters));
+                }
             }
-
-            folderSet.add(driveFile);
-            folderSet.addAll(getNestedFolders(folder, rootFile));
         }
 
         return folderSet;
@@ -305,7 +271,7 @@ public class GoogleDriveHelper {
         return true;
     }
 
-    public DriveFile createDriveFolder(DriveFile rootFolder, String name) throws IOException {
+    public DriveFile createDriveFolder(DriveFile rootFolder, String name) throws Exception {
         File metadata = new File();
         metadata.setParents(Collections.singletonList(rootFolder.getId()));
         metadata.setMimeType(GOOGLE_DRIVE_FOLDER_TYPE);
@@ -338,26 +304,11 @@ public class GoogleDriveHelper {
             }
         }
 
-        String query = "'" + rootFolder.getId() + "' in parents and mimeType = '" + GOOGLE_DRIVE_FOLDER_TYPE + "' and trashed = false";
-
-        Drive.Files.List request = drive.files().list()
-                .setPageSize(FILE_PAGE_SIZE)
-                .setFields("nextPageToken, files(id, name)")
-                .setQ(query);
-
-        do {
-            FileList files = request.execute();
-
-            for (File curFile : files.getFiles()) {
-                DriveFile driveFile = new DriveFile(curFile, rootFolder);
-                if (!newFolders.contains(driveFile)) {
-                    newFolders.addAll(createDriveFoldersFromLocalFolders(foldersToCreate, driveFile));
-                }
+        for (DriveFile driveFolder : rootFolder.getChildFolders()) {
+            if (!newFolders.contains(driveFolder)) {
+                newFolders.addAll(createDriveFoldersFromLocalFolders(foldersToCreate, driveFolder));
             }
-
-            request.setPageToken(files.getNextPageToken());
         }
-        while (request.getPageToken() != null && request.getPageToken().length() > 0);
 
         return newFolders;
     }
@@ -374,7 +325,7 @@ public class GoogleDriveHelper {
                 DocumentFile newFolder = rootFolder.getFile().createDirectory(dirName);
 
                 if (newFolder == null || newFolder.getName() == null) {
-                    throw new Exception("Couldn't create new folder");
+                    throw new Exception("Couldn't create new local folder " + dirName);
                 }
 
                 System.out.println("CREATED NEW LOCAL FOLDER " + newFolder.getName());
@@ -385,9 +336,8 @@ public class GoogleDriveHelper {
             }
         }
 
-        for (DocumentFile file : rootFolder.getFile().listFiles()) {
-            LocalFile currentFolder = new LocalFile(file, rootFolder);
-            if (file.isDirectory() && !newFolders.contains(currentFolder)) {
+        for (LocalFile currentFolder : rootFolder.getChildFolders()) {
+            if (!newFolders.contains(currentFolder)) {
                 newFolders.addAll(createLocalFoldersFromDriveFolders(foldersToCreate, currentFolder));
             }
         }
@@ -405,15 +355,17 @@ public class GoogleDriveHelper {
         LocalFileHelper localHelper = new LocalFileHelper(appContext);
         File rootFolder = getFileByName(driveFolderName, DriveType.FOLDER);
 
-        HashSet<DriveFile> driveFolderSet = getNestedFolders(rootFolder, null);
+        DriveFile driveRootFolder = new DriveFile(rootFolder, null);
+        HashSet<DriveFile> driveFolderSet = getDriveFoldersAndFiles(driveRootFolder, null);
 
         HashMap<DriveFile, HashSet<DriveFile>> driveFoldersWithFiles = new HashMap<>();
 
         for (DriveFile folder : driveFolderSet) {
-            driveFoldersWithFiles.put(folder, getFolderFiles(folder));
+            driveFoldersWithFiles.put(folder, folder.getChildFiles());
         }
 
-        HashSet<LocalFile> localFolderSet = LocalFileHelper.getNestedFolders(localFolder, null);
+        LocalFile localRootFolder = new LocalFile(localFolder, null);
+        HashSet<LocalFile> localFolderSet = localHelper.getLocalFilesAndFolders(localRootFolder, null);
 
         if (!localFolderSet.equals(driveFolderSet)) {
             throw msgHelper.getExceptionWithError("Drive and local folders are not equal");
@@ -422,10 +374,15 @@ public class GoogleDriveHelper {
         HashMap<LocalFile, HashSet<LocalFile>> localFolderWithFiles = new HashMap<>();
 
         for (LocalFile folder : localFolderSet) {
-            localFolderWithFiles.put(folder, localHelper.getFolderFiles(folder));
+            localFolderWithFiles.put(folder, folder.getChildFiles());
         }
 
-        return new FetchHelper(driveFoldersWithFiles, localFolderWithFiles, driveFolderSet, localFolderSet);
+        return new FetchHelper(driveFoldersWithFiles,
+                localFolderWithFiles,
+                driveFolderSet,
+                localFolderSet,
+                driveRootFolder,
+                localRootFolder);
     }
 
     public FetchHelper getFetcher(Activity activity, DocumentFile localFolder, String driveFolderName) throws Exception {
@@ -436,7 +393,8 @@ public class GoogleDriveHelper {
 
         File rootFolder = getFileByName(driveFolderName, DriveType.FOLDER);
 
-        HashSet<DriveFile> driveFolderSet = getNestedFolders(rootFolder, null);
+        DriveFile driveRootFolder = new DriveFile(rootFolder, null);
+        HashSet<DriveFile> driveFolderSet = getDriveFoldersAndFiles(driveRootFolder, null);
 
         System.out.println("NESTED DRIVE FOLDERS");
         System.out.println(driveFolderSet);
@@ -444,7 +402,7 @@ public class GoogleDriveHelper {
         HashMap<DriveFile, HashSet<DriveFile>> driveFoldersWithFiles = new HashMap<>();
 
         for (DriveFile folder : driveFolderSet) {
-            driveFoldersWithFiles.put(folder, getFolderFiles(folder));
+            driveFoldersWithFiles.put(folder, folder.getChildFiles());
         }
 
         System.out.println("ALL DRIVE FILES WITH FOLDERS");
@@ -452,7 +410,8 @@ public class GoogleDriveHelper {
 
         activity.runOnUiThread(() -> currentFetchOperationTextView.setText("Getting local files..."));
 
-        HashSet<LocalFile> localFolderSet = LocalFileHelper.getNestedFolders(localFolder, null);
+        LocalFile localRootFolder = new LocalFile(localFolder, null);
+        HashSet<LocalFile> localFolderSet = localHelper.getLocalFilesAndFolders(localRootFolder, null);
 
         System.out.println("NESTED LOCAL FOLDERS");
         System.out.println(localFolderSet);
@@ -460,13 +419,18 @@ public class GoogleDriveHelper {
         HashMap<LocalFile, HashSet<LocalFile>> localFolderWithFiles = new HashMap<>();
 
         for (LocalFile folder : localFolderSet) {
-            localFolderWithFiles.put(folder, localHelper.getFolderFiles(folder));
+            localFolderWithFiles.put(folder, folder.getChildFiles());
         }
 
         System.out.println("ALL LOCAL FILES WITH FOLDERS");
         System.out.println(localFolderWithFiles);
 
-        return new FetchHelper(driveFoldersWithFiles, localFolderWithFiles, driveFolderSet, localFolderSet);
+        return new FetchHelper(driveFoldersWithFiles,
+                localFolderWithFiles,
+                driveFolderSet,
+                localFolderSet,
+                driveRootFolder,
+                localRootFolder);
     }
 
     public Task<FetchHelper> fetchData(Activity activity, DocumentFile localFolder, String driveFolderName) {
@@ -480,7 +444,7 @@ public class GoogleDriveHelper {
         });
     }
 
-    public Task<Boolean> push(Activity activity, DocumentFile rootFolder, String driveFolderName) {
+    public Task<Boolean> push(Activity activity, LocalFile localRootFolder, DriveFile driveRootFolder) {
         return Tasks.call(executor, () -> {
 
             TextView currentOperationNameTextView = activity.findViewById(R.id.currentOperationNameTextView);
@@ -612,11 +576,9 @@ public class GoogleDriveHelper {
                 currentOperationFileNameTextView.setText("");
             });
 
-            File driveRootFolder = getFileByName(driveFolderName, DriveType.FOLDER);
-
             HashSet<DriveFile> newFolders =
                     createDriveFoldersFromLocalFolders(createFolderAndUploadToDriveFiles.keySet(),
-                            new DriveFile(driveRootFolder, null));
+                            driveRootFolder);
 
             System.out.println("NEW DRIVE FOLDERS:");
             System.out.println(newFolders);
@@ -660,7 +622,7 @@ public class GoogleDriveHelper {
                 currentOperationFileNameTextView.setText("");
             });
 
-            Boolean result = testLocalAndDriveFolders(rootFolder, driveFolderName);
+            Boolean result = testLocalAndDriveFolders(localRootFolder.getFile(), driveRootFolder.getName());
 
             activity.runOnUiThread(() -> {
                 if (result) {
@@ -681,7 +643,7 @@ public class GoogleDriveHelper {
         });
     }
 
-    public Task<Boolean> pull(Activity activity, DocumentFile rootFolder, String driveFolderName) {
+    public Task<Boolean> pull(Activity activity, LocalFile localRootFolder, DriveFile driveRootFolder) {
         return Tasks.call(executor, () -> {
             TextView currentOperationNameTextView = activity.findViewById(R.id.currentOperationNameTextView);
             TextView currentOperationFileNameTextView = activity.findViewById(R.id.currentOperationFileNameTextView);
@@ -820,7 +782,7 @@ public class GoogleDriveHelper {
             });
 
             HashSet<LocalFile> newFolders =
-                    createLocalFoldersFromDriveFolders(createFolderAndDownloadFromDriveFiles.keySet(), new LocalFile(rootFolder, null));
+                    createLocalFoldersFromDriveFolders(createFolderAndDownloadFromDriveFiles.keySet(), localRootFolder);
 
             System.out.println("NEW LOCAL FOLDERS:");
             System.out.println(newFolders);
@@ -864,7 +826,7 @@ public class GoogleDriveHelper {
                 currentOperationFileNameTextView.setText("");
             });
 
-            Boolean result = testLocalAndDriveFolders(rootFolder, driveFolderName);
+            Boolean result = testLocalAndDriveFolders(localRootFolder.getFile(), driveRootFolder.getName());
 
             activity.runOnUiThread(() -> {
                 if (result) {
