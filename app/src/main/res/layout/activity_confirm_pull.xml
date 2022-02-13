@@ -16,6 +16,16 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <Button
+                android:id="@+id/startPullButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="15dp"
+                android:backgroundTint="#0f0"
+                android:text="@string/start_pull_button_value"
+                android:textColor="#000" />
+
             <TextView
                 android:id="@+id/totalSizeTextView"
                 android:layout_width="wrap_content"
@@ -118,23 +128,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:layout_marginBottom="3dp"/>
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="20dp">
-
-                        <Button
-                            android:id="@+id/startPullButton"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_centerHorizontal="true"
-                            android:layout_marginBottom="30dp"
-                            android:backgroundTint="#0f0"
-                            android:text="@string/start_pull_button_value"
-                            android:textColor="#000" />
-                    </RelativeLayout>
+                        android:layout_marginBottom="20dp"/>
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>
         </LinearLayout>

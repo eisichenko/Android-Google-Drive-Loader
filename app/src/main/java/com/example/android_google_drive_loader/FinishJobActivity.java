@@ -41,6 +41,7 @@ public class FinishJobActivity extends AppCompatActivity {
 
         if (savedInstanceState == null) {
             if (MainActivity.operationType == OperationType.PUSH) {
+                setTitle("Push");
                 MainActivity.driveHelper.push(this,
                         MainActivity.fetchHelper.getLocalRootFolder(),
                         MainActivity.fetchHelper.getDriveRootFolder())
@@ -66,6 +67,7 @@ public class FinishJobActivity extends AppCompatActivity {
                         });
             }
             else if (MainActivity.operationType == OperationType.PULL) {
+                setTitle("Pull");
                 MainActivity.driveHelper.pull(this,
                         MainActivity.fetchHelper.getLocalRootFolder(),
                         MainActivity.fetchHelper.getDriveRootFolder())
